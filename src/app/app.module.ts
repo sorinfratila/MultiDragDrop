@@ -3,10 +3,21 @@ import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { MonitoringComponent } from './components/monitoring/monitoring.component';
+import { TileComponent } from './components/tile/tile.component';
+import { KeyPressEventsDirective } from './directives/key-press-events.directive';
+import { DraggableDirective } from './directives/draggable.directive';
+import { GapTileComponent } from './components/gap-tile/gap-tile.component';
+
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    MonitoringComponent,
+    TileComponent,
+    KeyPressEventsDirective,
+    DraggableDirective,
+    GapTileComponent
   ],
   imports: [
     BrowserModule,

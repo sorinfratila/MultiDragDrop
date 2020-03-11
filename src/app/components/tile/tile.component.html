@@ -1,0 +1,33 @@
+<div
+  id="monitoring-{{ data.indexOnScene }}"
+  class="monitoringtile"
+  [ngClass]="{ essential: data.size === 'tiny', selected: data.toggled }"
+  [attr.standard]="data.size === 'standard' ? 'standard' : null"
+>
+  <header class="monitoringtile__header">
+    <h2 class="monitoringtile__header__title">#tile-{{ data.id }}</h2>
+  </header>
+
+  <ng-template [ngIf]="data.toggled || data.preToggled">
+    <section class="overlay">
+      <div class="overlay__content overlay__content--multiselect" [ngClass]="{ selected: data.toggled }">
+        <input type="checkbox" class="selection-checkbox" [checked]="data.toggled" id="multiselectMaxID{{ data.id }}" />
+        <label
+          for="multiselectMaxID{{ data.id }}"
+          class="toggle toggle--button"
+          [ngClass]="{ 'multi-selection': data.preToggled }"
+          [appDraggable]="data.draggable"
+          id="{{ data.indexOnScene }}"
+        >
+          <div class="check-wrapper">
+            <div class="button__icon no__style" *ngIf="data.toggled">
+              <svg>
+                <use xlink:href="assets/icons/symbol-defs.svg#icon-check"></use>
+              </svg>
+            </div>
+          </div>
+        </label>
+      </div>
+    </section>
+  </ng-template>
+</div>

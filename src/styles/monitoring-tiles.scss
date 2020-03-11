@@ -1,0 +1,814 @@
+@import './variables.scss';
+
+$monitoringtile-bg: $grey-04;
+$monitoringtile-bg-disabled: $grey-05;
+$monitoringtile-fg: $white;
+$monitoringtile-border: $grey-02;
+
+$monitoringtile--active-bg: $white;
+$monitoringtile--active-fg: $black;
+
+$monitoringtile--alert-bg: $alert;
+$monitoringtile--alert-fg: $white;
+$monitoringtile--focus: $blue-09;
+$monitoringtile--enabled: $white;
+$monitoringtile--empty: $grey-06;
+$monitoringtile--peak: $blue-02;
+$monitoringtile--threshold: $utility-01;
+
+$monitoringtile__color-bg: $grey-12;
+$monitoringtile__content-bg: $grey-16;
+$monitoringtile__content-fg: $grey-15;
+$monitoringtile__content--dimmed-fg: $grey-03;
+$monitoringtile__content--dimmed-bg: $grey-16;
+$monitoringtile__graph-bg: $grey-16;
+$monitoringtile__graph-fg: $grey-09;
+$monitoringtile__header-select-fg: $white;
+$monitoringtile__header-select--focus-fg: $grey-07;
+
+$monitoringtile--multiselect-bg: $opaque-01;
+$monitoringtile--multiselect--selected-bg: $opaque-02;
+
+$font-medium: 'senneheiser-medium';
+$font-bold: 'sennheiser-bold';
+$font-regular: 'sennheiser-regular';
+
+$level-meter-gray: #3e4245;
+$level-meter-dark-gray: #282828;
+$canvas-fill: #d5d5d5;
+
+.jumpToWarpSpeed {
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  -o-transform: translateZ(0);
+  transform: translateZ(0);
+
+  -moz-transition: all 1s;
+  -webkit-transition: all 1s;
+  -o-transition: all 1s;
+  transition: all 1s;
+}
+
+.monitoringtile {
+  flex: 1 1 auto;
+  background-color: $monitoringtile-bg;
+  width: 14rem;
+  max-width: 14rem;
+  min-height: 24rem;
+  max-height: 24rem;
+  color: $monitoringtile-fg;
+  user-select: none;
+  cursor: default;
+  overflow: hidden;
+  position: relative;
+
+  display: flex;
+  flex-flow: column;
+  justify-content: flex-start;
+  align-items: center;
+  align-content: stretch;
+
+  .overlay {
+    position: absolute;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    z-index: 8;
+
+    .overlay__content {
+      background-color: $monitoringtile--multiselect--selected-bg;
+      flex: 1 1 auto;
+
+      input[type='checkbox'] {
+        visibility: hidden;
+        position: fixed;
+      }
+    }
+
+    .overlay__content--multiselect {
+      background-color: $monitoringtile--multiselect-bg;
+      display: flex;
+
+      .check-wrapper {
+        z-index: -1; //added z index so that dragover event doesn't recognize it
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        right: -0.3rem;
+        width: 6rem;
+        height: 6rem;
+        border-radius: 3rem;
+        background-color: $monitoringtile--multiselect--selected-bg;
+
+        svg {
+          width: 5.5rem;
+          height: 5.5rem;
+        }
+      }
+
+      &.selected {
+        background-color: $monitoringtile--multiselect--selected-bg;
+        // background-color: $opaque-03;
+
+        .toggle .btn--icon {
+          visibility: visible;
+
+          &.multi-selection {
+            background-color: $monitoringtile--multiselect--selected-bg;
+          }
+
+          input[type='checkbox'] {
+            -webkit-appearance: none;
+            visibility: hidden;
+          }
+        }
+      }
+
+      .toggle {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        align-content: stretch;
+        flex: 1 1 auto;
+        cursor: pointer;
+
+        .btn--icon {
+          visibility: hidden;
+          background: transparent !important;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          align-content: stretch;
+          flex: 1 1 auto;
+          width: 100%;
+          height: 100%;
+          .btn__icon {
+            width: 4.6rem;
+            height: 4.6rem;
+          }
+        }
+      }
+    }
+  }
+
+  .overlay__content--center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: stretch;
+  }
+
+  &.disabled {
+    background-color: $monitoringtile-bg-disabled;
+  }
+
+  &.essential {
+    max-height: 7rem;
+    min-height: 7rem;
+  }
+
+  &:focus,
+  &:focus-within {
+    outline: 1px solid $monitoringtile--focus;
+    outline-offset: 0;
+  }
+
+  &:active,
+  &.selected {
+    outline: 2px solid $monitoringtile--focus;
+    outline-offset: 1px;
+
+    &:focus {
+      outline: 3px solid $monitoringtile--focus;
+      outline-offset: 0;
+    }
+  }
+
+  &.alert {
+    .monitoringtile__header {
+      color: $monitoringtile--alert-fg;
+      .slselect {
+        &.slselect--more,
+        &.slselect--combo {
+          .btn__icon {
+            fill: $monitoringtile--alert-fg;
+          }
+        }
+      }
+      background-color: $monitoringtile--alert-bg;
+    }
+  }
+}
+
+.monitoringtile__color {
+  height: 4px;
+  transition: background-color 0.2s ease-in-out;
+
+  &.grey,
+  &.GREY {
+    background-color: #979797;
+  }
+
+  &.light-blue,
+  &.BLUE {
+    background-color: #64ffea;
+  }
+
+  &.rose,
+  &.ROSE {
+    background-color: #f4afe6;
+  }
+
+  &.yellow,
+  &.YELLOW {
+    background-color: #ffe64a;
+  }
+}
+.warning__area {
+  &.warning {
+    height: inherit;
+    width: inherit;
+    position: absolute;
+    z-index: 1;
+  }
+}
+
+.top__of__canvas {
+  position: relative;
+  z-index: 2;
+}
+
+.monitoringtile__header {
+  max-height: 5rem;
+  flex: 0 1 5rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid $monitoringtile-border;
+
+  .warning {
+    height: inherit;
+    width: inherit;
+    position: absolute;
+    z-index: 1;
+  }
+
+
+  &.essential {
+    border-bottom: none;
+  }
+
+  .title__container {
+    padding: 0.6rem 0.7rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .monitoringtile__header__title {
+    font-family: $font-bold, Helvetica, Arial, sans-serif;
+    font-size: 1.9rem;
+    line-height: 1;
+  }
+
+  .monitoringtile__header__detail {
+    height: 2.1rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0 0.2rem 0 0.7rem;
+    align-items: center;
+    position: relative;
+
+    .freq__wrapper {
+      height: 100%;
+      width: 90%;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+
+      p {
+      //   @extend .truncate;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        font-family: $font-medium, Helvetica, Arial, sans-serif;
+        font-size: 9px;
+        line-height: 2;
+      }
+    }
+
+    .freq__wrapper :first-child {
+      margin-right: 0.5rem;
+    }
+
+    .small {
+      height: 100%;
+      width: 10%;
+      padding: 0;
+      border: 0;
+
+      svg {
+        height: 1.7rem;
+        width: 1.7rem;
+        margin-top: 0;
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+.monitoringtile__battery,
+.monitoringtile__indicators,
+.monitoringtile__functions,
+.monitoringtile__bargraphs {
+  border-top: 1px solid $monitoringtile-border;
+  flex: 1 1 auto;
+  width: 100%;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+
+  p {
+    font-family: $font-bold, Helvetica, Arial, sans-serif;
+    font-size: 1rem;
+    text-align: center;
+    line-height: 1;
+  }
+
+  strong {
+    font-family: $font-bold, Helvetica, Arial, sans-serif;
+  }
+
+  .btn__icon {
+    width: 5rem;
+    height: 3rem;
+    fill: $monitoringtile__content-fg;
+  }
+}
+
+.monitoringtile__indicators,
+.monitoringtile__functions {
+  align-items: center;
+
+  .content__item {
+    flex: 1 0 auto;
+    align-self: stretch;
+    border-left: 1px solid $monitoringtile-border;
+    line-height: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &:first-child {
+      border-left: 0;
+    }
+  }
+}
+
+[essential] {
+  .monitoringtile__indicators {
+    border-top: 1px solid $monitoringtile-border;
+  }
+}
+
+.monitoringtile__battery {
+  height: 2.8rem;
+  flex: 0 1 2.8rem;
+
+  &.alert {
+    background-color: $monitoringtile--alert-bg;
+    color: $monitoringtile--alert-fg;
+  }
+
+  .btn__icon {
+    padding-left: 0;
+  }
+
+  .btn__icon {
+    .percentage {
+      width: calc(20px / 100 * var(--percentage)); // TODO: Check with sorin if it's fine , or not :/
+    }
+  }
+
+  .battery__values {
+    margin-bottom: -0.3rem;
+  }
+  .battery__time {
+    padding-right: 0.8rem;
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+}
+
+[standard] {
+  min-height: 24rem;
+  max-height: 24rem; // TODO: Check with Sorin @ Adrian
+
+  .bargraph {
+    padding-bottom: 3.6rem;
+  }
+
+  .bargraph__label {
+    bottom: 1.2rem;
+  }
+}
+
+[essential] {
+  min-height: 7rem;
+}
+
+.monitoringtile--width-battery {
+  &[short] {
+    .bargraph {
+      padding-bottom: 2rem;
+    }
+
+    .bargraph__label {
+      bottom: 0.5rem;
+    }
+  }
+
+  &[standard] {
+    .bargraph {
+      padding-bottom: 2.8rem;
+    }
+
+    .bargraph__label {
+      bottom: 0.8rem;
+    }
+  }
+}
+
+.monitoringtile__indicators {
+  .content__item {
+    color: $monitoringtile__content-fg;
+
+    &.enabled {
+      color: $monitoringtile--enabled;
+    }
+
+    &.active {
+      background-color: $monitoringtile--active-bg;
+      color: $monitoringtile--active-fg;
+    }
+
+    &.alert {
+      background-color: $monitoringtile--alert-bg;
+      color: $monitoringtile--alert-fg;
+    }
+  }
+}
+
+.monitoringtile__bargraphs {
+  border-top: none;
+  align-items: stretch;
+  justify-content: center;
+  flex: 1 0 auto;
+
+  .bargraph {
+    display: flex;
+    padding: 0.8rem 0;
+    border-left: 1px solid black;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+
+    &:first-child {
+      border-left: none;
+    }
+
+    &.bargraph__graph--signal {
+      padding-top: 2.4rem;
+      .bargraph__signal {
+        top: 0.7rem;
+
+        &.move__up {
+          top: -1.7rem;
+        }
+      }
+    }
+  }
+
+  .bargraph__scale {
+    display: flex;
+    flex-flow: column;
+    margin: 0 -0.2rem 0 0.5rem;
+
+    p {
+      font-size: 0.7rem;
+      line-height: 1;
+      text-align: right;
+    }
+    .scale__unit {
+      margin-top: -1.4rem;
+    }
+  }
+
+  .bargraph__scale--dbm {
+    position: relative;
+    height: 110px;
+    .scale__value {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: auto;
+    }
+    .scale__value:nth-child(1) {
+      position: relative;
+    }
+    .scale__value:nth-child(2) {
+      top: 22.5%;
+    }
+    .scale__value:nth-child(3) {
+      top: 45%;
+    }
+    .scale__value:nth-child(4) {
+      top: 67.5%;
+    }
+    .scale__value:nth-child(5) {
+      top: 90%;
+    }
+  }
+
+  .bargraph__scale--dbfs {
+    position: relative;
+    height: 110px;
+    .scale__value {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: auto;
+    }
+    .scale__value:nth-child(1) {
+      position: relative;
+    }
+    .scale__value:nth-child(2) {
+      top: 20%;
+    }
+    .scale__value:nth-child(3) {
+      top: 40%;
+    }
+    .scale__value:nth-child(4) {
+      top: 60%;
+    }
+    .scale__value:nth-child(5) {
+      top: 80%;
+    }
+  }
+
+  .bargraph__scale--dbrfanalog {
+    position: relative;
+    .scale__value {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: auto;
+    }
+    .scale__value:nth-child(1) {
+      top: 2%;
+    }
+    .scale__value:nth-child(2) {
+      top: 26%;
+    }
+    .scale__value:nth-child(3) {
+      top: 50%;
+    }
+    .scale__value:nth-child(4) {
+      top: 74%;
+    }
+  }
+
+  .bargraph__scale--dbafanalog {
+    position: relative;
+    .scale__value {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: auto;
+    }
+    .scale__value:nth-child(1) {
+      top: 9%;
+    }
+    .scale__value:nth-child(2) {
+      top: 35%;
+    }
+    .scale__value:nth-child(3) {
+      top: 64%;
+    }
+    .scale__value:nth-child(4) {
+      top: 89%;
+    }
+  }
+
+  .bargraph__scale--percent {
+    max-height: 110px !important;
+    position: relative;
+    .scale__value {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: auto;
+    }
+    .scale__value:nth-child(1) {
+      position: relative;
+    }
+    .scale__value:nth-child(2) {
+      top: 25%;
+    }
+    .scale__value:nth-child(3) {
+      top: 50%;
+    }
+    .scale__value:nth-child(4) {
+      top: 75%;
+    }
+  }
+
+  .bargraph__container {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 0.5rem;
+    // TODO: not sure about this
+    max-height: 110px !important;
+  }
+
+  .bargraph__label {
+    line-height: 1;
+    position: absolute;
+    left: 0;
+    bottom: 1rem;
+    width: 100%;
+
+    small {
+      font-size: 0.8rem;
+    }
+  }
+
+  .bargraph__level {
+    width: 1rem;
+    position: absolute;
+    z-index: 8;
+
+    &.margin__left {
+      margin-left: 0.8rem;
+    }
+  }
+
+  .bargraph__graph {
+    width: 1rem;
+    position: relative;
+    height: 110px;
+
+    &.margin__left {
+      margin-left: 0.8rem;
+    }
+  }
+
+  .bargraph__graph {
+    background-color: $monitoringtile__graph-bg;
+    + .bargraph__graph {
+      .bargraph__threshold--synced {
+        width: 2.8rem;
+        margin-left: -1.8rem;
+      }
+    }
+  }
+
+  .bargraph__level {
+    &.alert {
+      background-color: transparent;
+      .level__bar {
+        &.level__bar--active {
+          background-color: $monitoringtile--alert-bg;
+        }
+      }
+    }
+
+    .level__bar {
+      background-color: $monitoringtile__content-bg;
+      flex: 1 1 auto;
+      width: 1rem;
+      height: 0.2rem;
+      margin-top: 0.2rem;
+
+      &.level__bar--peak {
+        background-color: $monitoringtile--peak;
+      }
+
+      &.level__bar--active {
+        background-color: $monitoringtile__content-fg;
+      }
+
+      &.level__bar--alert {
+        background-color: $monitoringtile--alert-bg;
+      }
+
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+  }
+
+  .bargraph__signal {
+    max-height: 1rem;
+    min-height: 1rem;
+    min-width: 1rem;
+    max-width: 1rem;
+    color: $monitoringtile__content--dimmed-fg;
+    background-color: $monitoringtile__content--dimmed-bg;
+    line-height: 1.2;
+    font-size: 0.8rem;
+    position: absolute;
+    width: 60%;
+    top: 1.7rem;
+
+    &.margin__left {
+      margin-left: 0.8rem;
+    }
+
+    &.active {
+      background-color: $monitoringtile--active-bg;
+    }
+
+    &.alert {
+      background-color: $monitoringtile--alert-bg;
+      color: $monitoringtile--alert-fg;
+    }
+  }
+
+  .bargraph__value,
+  .bargraph__threshold {
+    width: 1rem;
+    background-color: transparent;
+    position: absolute;
+    top: auto;
+    bottom: 0;
+  }
+  .bargraph__value {
+    background-color: $monitoringtile__graph-fg;
+
+    &.alert {
+      background-color: $monitoringtile--alert-bg;
+    }
+  }
+
+  .bargraph__threshold {
+    border-top: 3px solid $monitoringtile--threshold;
+  }
+
+  .bargraph__graph--level {
+    .bargraph__graph {
+      background-color: $monitoringtile-bg;
+    }
+  }
+}
+/* !important is needed because twojs doesn't expose any methods to set the height/width as percentage instead of px */
+.bar__fix > canvas {
+  margin: 0;
+  padding: 0;
+  bottom: 0;
+  position: absolute;
+  height: 110px !important;
+  width: 100% !important;
+}
+
+.antenna__div__letter {
+  position: relative;
+  z-index: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.bar__fix__af {
+  height: 110px;
+}
+
+.bar__fix__af > canvas {
+  width: 100% !important;
+  height: 110px !important;
+}
+
+.bargraph__signal > canvas {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+canvas {
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  -o-transform: translateZ(0);
+  transform: translateZ(0);
+
+  -moz-transition: all 1s;
+  -webkit-transition: all 1s;
+  -o-transition: all 1s;
+  transition: all 1s;
+}

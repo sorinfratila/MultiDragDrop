@@ -1,0 +1,29 @@
+<div class="monitoring__container">
+  <div
+    id="scene"
+    class="monitoring__scene"
+    appKeyPressEvents
+    (metaKeyAPressed)="onMetaKeyAPressed($event)"
+    (escapePressed)="onEscapePressed($event)"
+  >
+    <div
+      id="wrapper-{{ tile.indexOnScene }}"
+      *ngFor="let tile of deviceList; let i = index"
+      (click)="toggle(tile, $event)"
+    >
+      <app-tile
+        *ngIf="!tile.isGapTile"
+        id="t-{{ tile.indexOnScene }}"
+        class="tile"
+        (contextmenu)="onCtrlClick($event, tile)"
+        [data]="tile"
+      ></app-tile>
+      <app-gap-tile
+        *ngIf="tile.isGapTile"
+        id="t-{{ tile.indexOnScene }}"
+        class="gap__tile"
+        [data]="tile"
+      ></app-gap-tile>
+    </div>
+  </div>
+</div>

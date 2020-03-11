@@ -1,0 +1,56 @@
+@import '../../../styles/colors.scss';
+
+.monitoring__container {
+  display: flex;
+  position: relative;
+  max-width: 4096px;
+  max-height: 2160px;
+  height: 100vh;
+
+  /* Prevent the text contents of draggable elements from being selectable. */
+  [draggable] {
+    -webkit-user-select: none;
+    user-select: none;
+    /* Required to make elements draggable in old WebKit */
+    -webkit-user-drag: element;
+  }
+
+  .monitoring__scene {
+    padding: 10px;
+    // margin-bottom: 3.8rem;
+    max-width: 4096px;
+    max-height: calc(2160px);
+    display: grid;
+    grid-template-columns: repeat(25, 14rem);
+    grid-template-rows: repeat(8, 24rem);
+    grid-column-gap: 20px;
+    grid-row-gap: 20px;
+    overflow-y: scroll;
+    overflow-x: scroll;
+    position: relative;
+    width: stretch;
+
+    .gap__tile {
+      // margin: 1rem;
+      background-color: darkolivegreen;
+      width: 14rem;
+      max-width: 14rem;
+      min-height: 24rem;
+      max-height: 24rem;
+      user-select: none;
+      cursor: default;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-flow: column;
+      justify-content: flex-start;
+      align-items: center;
+      align-content: stretch;
+    }
+  }
+}
+
+.selectable {
+  z-index: 12;
+  background-color: $opaque-02;
+}
