@@ -10,8 +10,11 @@ import { SimpleTile } from 'src/app/services/SimpleTile';
 export class MonitoringComponent implements OnInit {
   deviceList: any[];
   selectedScene: Scene;
+
+  isBetween: string[];
   constructor() {
     this.deviceList = [];
+    this.isBetween = [];
   }
 
   ngOnInit() {
@@ -26,10 +29,7 @@ export class MonitoringComponent implements OnInit {
   @HostListener('dragover', ['$event'])
   dragOverHandler = (ev: any) => {
     ev.preventDefault();
-    // ev.target.style.border = 'dashed';
-    // ev.target.style.borderWidth = '0.5px';
-    // ev.dataTransfer.setData('Text', ev.path[2].id);
-    console.log(`drag over ${ev.path[2].id ? ev.path[2].id : 'scene'}`);
+    // console.log(`drag over ${ev.path[2].id ? ev.path[2].id : 'scene'}`);
   };
 
   @HostListener('dragstart', ['$event'])
@@ -44,32 +44,61 @@ export class MonitoringComponent implements OnInit {
   dragEnterHandler = (ev: any) => {
     ev.target.style.border = 'dashed';
     ev.target.style.borderWidth = '0.5px';
-    console.log('DRAG ENTER =>>>>>', ev.target.getAttribute('id'));
+    // console.log('DRAG ENTER =>>>>>', ev.target.getAttribute('id'));
+    this.setIsBetweenRight(ev.target.getAttribute('id'));
+    console.log('isBetween', this.isBetween);
   };
 
   @HostListener('dragleave', ['$event'])
   dragLeaveHandler = (ev: any) => {
     ev.target.style.border = 'none';
-    console.log('DRAG LEAVE =>>>>>', ev.target.getAttribute('id'));
+    // console.log('DRAG LEAVE =>>>>>', ev.target.getAttribute('id'));
+    this.setIsBetweenLeft(ev.target.getAttribute('id'));
+    console.log('isBetween', this.isBetween);
   };
 
   @HostListener('drop', ['$event'])
   dropHandler = (ev: any) => {
     ev.preventDefault();
     const data = ev.dataTransfer.getData('Text');
-    console.log('drop Event ========', data);
-    console.log('drop Event ========', ev.path[2].id);
+    // console.log('drop Event ========', data);
+    // console.log('drop Event ========', ev.path[2].id);
     ev.target.style.border = 'none';
+    const res = ev.path[2].id.replace(/\D/g, '');
+
+    try {
+      if (data && res) {
+        this.selectedScene.swapSingleTiles({ fromIndex: Number(data), toIndex: Number(res) });
+        this.deviceList = this.selectedScene.simpleTileList;
+        // this.sceneService.updateScene(this.selectedScene);
+      } else {
+        const left = Number(this.isBetween[0].replace(/\D/g, ''));
+        const right = Number(this.isBetween[1].replace(/\D/g, ''));
+
+        if (left === 999) {
+          // do nothing
+        } else {
+          if (right === 999) {
+            this.selectedScene.swapSingleTiles({ fromIndex: Number(data), toIndex: left });
+            // TODO: something is off here, please fix
+            this.deviceList = this.selectedScene.simpleTileList;
+          }
+        }
+      }
+    } catch (e) {
+      console.log(e);
+    }
+
+    // console.log('isBetween', this.isBetween);
   };
 
-  public swap(arr: SimpleTile[], { fromIndex, toIndex }) {
-    const arrCopy = [...arr];
-    // const { indexOnScene: fromIndex } = fromEl;
-    // const { indexOnScene: toIndex } = toEl;
-    const tile = this.selectedScene.getByIndexOnScene()
-
+  private setIsBetweenLeft(leftString: string) {
+    this.isBetween[0] = leftString;
   }
 
+  private setIsBetweenRight(rightString: string) {
+    this.isBetween[1] = rightString;
+  }
 
   public generateNonGapTiles(num: number) {
     const tiles = [];
@@ -98,7 +127,6 @@ export class MonitoringComponent implements OnInit {
     e.preventDefault();
     if (e.metaKey) this.onCtrlClick(e, clickedTile);
     else {
-      this.checkInitialTileStatus(clickedTile);
       clickedTile.toggle();
 
       if (!this.selectedScene.getMultiSelectionState()) {
@@ -106,8 +134,6 @@ export class MonitoringComponent implements OnInit {
           // toggling the last tile toggled, becasue there
           // can be only one tile toggled at a time
           // if multiselectionState is false
-          this.selectedScene.setInitShiftClickTile({ id: clickedTile.id, indexOnScene: clickedTile.indexOnScene });
-          this.selectedScene.setLastShiftClickTile({ id: clickedTile.id, indexOnScene: clickedTile.indexOnScene});
           const lastId = this.selectedScene.getLastToggledTileId();
           if (lastId) {
             this.selectedScene.toggleTileById(lastId);
@@ -116,52 +142,11 @@ export class MonitoringComponent implements OnInit {
           this.selectedScene.setLastToggledTileId(clickedTile.id);
         } else {
           this.selectedScene.setLastToggledTileId(null);
-          this.selectedScene.setInitShiftClickTile(null);
-          this.selectedScene.setLastShiftClickTile(null);
         }
       }
     }
 
     console.log('clickedTile', clickedTile)
-  }
-
-  private checkInitialTileStatus(clickedTile: SimpleTile) {
-    let answer = false;
-    if (this.selectedScene.getInitShiftClickTile()) {
-      if (clickedTile.id === this.selectedScene.getInitShiftClickTile().id) {
-        answer = true;
-        const tileList = this.selectedScene.getAllTiles();
-        if (this.selectedScene.getToggledTiles().length > 1) {
-
-          // when toggling the InitShiftClickTile and there are multiple tiles toggled
-          // resetting the initial point of referrence
-
-          if (
-            tileList[clickedTile.indexOnScene - 1]
-            && tileList[clickedTile.indexOnScene - 1].toggled === true
-          ) {
-            this.selectedScene.setInitShiftClickTile({
-              id: tileList[clickedTile.indexOnScene - 1].id,
-              indexOnScene: tileList[clickedTile.indexOnScene - 1].indexOnScene
-            });
-          } else {
-            this.selectedScene.setInitShiftClickTile({
-              id: tileList[clickedTile.indexOnScene + 1].id,
-              indexOnScene: tileList[clickedTile.indexOnScene + 1].indexOnScene
-            });
-          }
-        } else {
-          // clicking on the same tile with SHIFT pressed
-          // when clickedTile is the only one toggled so far
-          // resetting the toggling settings, updating and returning
-          this.selectedScene.setLastToggledTileId(null);
-          this.selectedScene.setInitShiftClickTile(null);
-          this.selectedScene.setLastShiftClickTile(null);
-        }
-      }
-    }
-
-    return answer;
   }
 
   onCtrlClick = (ev: any, clickedTile: SimpleTile) => {
@@ -170,15 +155,11 @@ export class MonitoringComponent implements OnInit {
 
     if (buttons === 2) return; // it means it was initiated with a right click
 
-    this.checkInitialTileStatus(clickedTile);
-
     // method used for ctrl+clicking a tile
     if (clickedTile.toggled === true) {
       clickedTile.toggle();
       if (!this.selectedScene.isAnyTileToggled()) {
         this.selectedScene.setLastToggledTileId(null);
-        this.selectedScene.setInitShiftClickTile(null);
-        this.selectedScene.setLastShiftClickTile(null);
       }
     } else {
       if (this.selectedScene.isAnyTileToggled()) {
@@ -189,8 +170,6 @@ export class MonitoringComponent implements OnInit {
       }
       clickedTile.toggle();
       this.selectedScene.setLastToggledTileId(clickedTile.id);
-      this.selectedScene.setInitShiftClickTile({ id: clickedTile.id, indexOnScene: clickedTile.indexOnScene});
-      this.selectedScene.setLastShiftClickTile({ id: clickedTile.id, indexOnScene: clickedTile.indexOnScene});
     }
   }
 
@@ -216,8 +195,6 @@ export class MonitoringComponent implements OnInit {
       this.selectedScene.toggleMultiSelection(false);
       this.selectedScene.toggleAllTiles(false);
       this.selectedScene.setLastToggledTileId(null);
-      this.selectedScene.setInitShiftClickTile(null);
-      this.selectedScene.setLastShiftClickTile(null);
     }
   };
 }

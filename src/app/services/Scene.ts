@@ -7,8 +7,6 @@ export class Scene {
   selected: boolean;
   multiSelectionState: boolean;
   lastToggledTileId: any;
-  initShiftClickTile: any;
-  lastShiftClickTile: any;
 
   constructor(
     name: string,
@@ -21,8 +19,6 @@ export class Scene {
     this.selected = selected;
     this.multiSelectionState = false;
     this.lastToggledTileId = null;
-    this.initShiftClickTile = null;
-    this.lastShiftClickTile = null;
   }
 
   public getByIndexOnScene(index: number) {
@@ -45,43 +41,19 @@ export class Scene {
     return this.lastToggledTileId;
   }
 
-  public setInitShiftClickTile(obj: any) {
-    if (obj) {
-      const { id, indexOnScene } = obj;
-      this.initShiftClickTile = {
-        ...this.initShiftClickTile,
-        id,
-        indexOnScene,
-      }
-    } else this.initShiftClickTile = null;
-  }
+  public swapSingleTiles({ fromIndex, toIndex }) {
+    const stlCopy = [...this.simpleTileList];
+    // new Scene method
+    if (typeof fromIndex === 'number' && typeof toIndex === 'number') {
+      const tempTile = stlCopy[fromIndex];
+      stlCopy[fromIndex] = stlCopy[toIndex];
+      stlCopy[fromIndex].setIndexOnScene(fromIndex);
+      stlCopy[toIndex] = tempTile;
+      stlCopy[toIndex].setIndexOnScene(toIndex);
 
-  public getInitShiftClickTile() {
-    return this.initShiftClickTile;
-  }
+      this.setTileList(stlCopy);
 
-  public setLastShiftClickTile(obj: any) {
-    if (obj) {
-      const { id, indexOnScene } = obj;
-      this.lastShiftClickTile = {
-        ...this.lastShiftClickTile,
-        id,
-        indexOnScene,
-      }
-    } else this.lastShiftClickTile = null;
-  }
-
-  // public detectChangesForTileById(id: string) {
-  //   const tile = this.getTileById(id);
-  //   MemoryStoreService.instance.doEmitTo('detectChanges', id, tile);
-  // }
-
-  // public detectChangesForAllTiles() {
-  //   return this.memoryStore.doEmitTo()
-  // }
-
-  public getLastShiftClickTile() {
-    return this.lastShiftClickTile;
+    } else throw new Error('fromIndex or toIndex is not a number');
   }
 
   public getCheckedTilesLength() {
