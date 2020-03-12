@@ -2,6 +2,11 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { Scene } from 'src/app/services/Scene';
 import { SimpleTile } from 'src/app/services/SimpleTile';
 
+const DIRECTION = {
+  LEFT: 'left',
+  RIGHT: 'right',
+}
+
 @Component({
   selector: 'app-monitoring',
   templateUrl: './monitoring.component.html',
@@ -11,10 +16,13 @@ export class MonitoringComponent implements OnInit {
   deviceList: any[];
   selectedScene: Scene;
 
-  isBetween: string[];
+  dropPointLocation: any = Object.create(null);
   constructor() {
     this.deviceList = [];
-    this.isBetween = [];
+    this.dropPointLocation = {
+      hasLeft: '',
+      direction: DIRECTION.RIGHT,
+    };
   }
 
   ngOnInit() {
@@ -29,75 +37,108 @@ export class MonitoringComponent implements OnInit {
   @HostListener('dragover', ['$event'])
   dragOverHandler = (ev: any) => {
     ev.preventDefault();
+    console.log('DRAG over========', ev.target.getAttribute('id'));
     // console.log(`drag over ${ev.path[2].id ? ev.path[2].id : 'scene'}`);
   };
 
   @HostListener('dragstart', ['$event'])
   dragStartHandler = (ev: any) => {
-    ev.target.style.border = 'dashed';
-    ev.target.style.borderWidth = '0.5px';
-    ev.dataTransfer.setData('Text', ev.target.getAttribute('id'));
-    console.log('START Event =>>>>>', ev);
+    const { target, dataTransfer } = ev;
+    target.style.border = 'dashed';
+    target.style.borderWidth = '0.5px';
+    console.log('target.getAttribute', target.getAttribute('id'));
+    dataTransfer.setData('Text', ev.target.getAttribute('id'));
   };
 
   @HostListener('dragenter', ['$event'])
   dragEnterHandler = (ev: any) => {
-    ev.target.style.border = 'dashed';
-    ev.target.style.borderWidth = '0.5px';
-    // console.log('DRAG ENTER =>>>>>', ev.target.getAttribute('id'));
-    this.setIsBetweenRight(ev.target.getAttribute('id'));
-    console.log('isBetween', this.isBetween);
+    const { target } = ev;
+    target.style.border = 'dashed';
+    target.style.borderWidth = '0.5px';
+    console.log('DRAG ENTER =>>>>>', ev);
+    if (Number(target.getAttribute('id').replace(/\D/g, '')) !== 999) {
+      this.dropPointLocation = null;
+    }
+    console.log('dropPointLocation', this.dropPointLocation);
   };
 
   @HostListener('dragleave', ['$event'])
   dragLeaveHandler = (ev: any) => {
+    const { offsetX, offsetY, target } = ev;
     ev.target.style.border = 'none';
-    // console.log('DRAG LEAVE =>>>>>', ev.target.getAttribute('id'));
-    this.setIsBetweenLeft(ev.target.getAttribute('id'));
-    console.log('isBetween', this.isBetween);
+    console.log('DRAG LEAVE =>>>>>', ev);
+    this.dropPointLocation = this.setDropPointLocation({
+      target: Number(target.getAttribute('id').replace(/\D/g, '')),
+      offsetX,
+      offsetY
+    });
+    console.log('dropPointLocation', this.dropPointLocation);
   };
 
   @HostListener('drop', ['$event'])
   dropHandler = (ev: any) => {
     ev.preventDefault();
     const data = ev.dataTransfer.getData('Text');
-    // console.log('drop Event ========', data);
     // console.log('drop Event ========', ev.path[2].id);
     ev.target.style.border = 'none';
     const res = ev.path[2].id.replace(/\D/g, '');
 
     try {
+      console.log(data, res);
       if (data && res) {
+        console.log('SWAPPING TILES');
         this.selectedScene.swapSingleTiles({ fromIndex: Number(data), toIndex: Number(res) });
         this.deviceList = this.selectedScene.simpleTileList;
         // this.sceneService.updateScene(this.selectedScene);
       } else {
-        const left = Number(this.isBetween[0].replace(/\D/g, ''));
-        const right = Number(this.isBetween[1].replace(/\D/g, ''));
+        if (this.dropPointLocation) {
+          const { hasLeft, direction } = this.dropPointLocation;
+          this.selectedScene.insertTileAtPosition({
+            indexToRemoveAt: Number(data),
+            newIndexOnScene: direction === 'left' ? hasLeft : hasLeft + 1
+          });
+          // if (direction === 'right') this.selectedScene.swapSingleTiles({ fromIndex: Number(data), toIndex: hasLeft + 1 });
 
-        if (left === 999) {
-          // do nothing
-        } else {
-          if (right === 999) {
-            this.selectedScene.swapSingleTiles({ fromIndex: Number(data), toIndex: left });
-            // TODO: something is off here, please fix
-            this.deviceList = this.selectedScene.simpleTileList;
-          }
+          this.deviceList = this.selectedScene.simpleTileList;
         }
       }
     } catch (e) {
       console.log(e);
     }
 
-    // console.log('isBetween', this.isBetween);
+    console.log('dropPointLocation', this.dropPointLocation);
   };
 
-  private setIsBetweenLeft(leftString: string) {
-    this.isBetween[0] = leftString;
-  }
+  // private dropPointLocationLeft(leftString: string) {
+  //   this.dropPointLocation[0] = leftString;
+  // }
 
-  private setIsBetweenRight(rightString: string) {
-    this.isBetween[1] = rightString;
+  // private dropPointLocationRight(rightString: string) {
+  //   this.dropPointLocation[1] = rightString;
+  // }
+
+  private setDropPointLocation({ offsetX, offsetY, target }) {
+    if (offsetY >= 240 || offsetY <= 0) {
+      // it means the tile has been dragged either from above or from below
+      // nothing happens
+      return null;
+    } else {
+      if (target !== 999) {
+        if (offsetX >= 140) {
+          return {
+            hasLeft: target,
+            direction: DIRECTION.RIGHT,
+          };
+        }
+
+        return {
+          hasLeft: target,
+          direction: DIRECTION.LEFT,
+        };
+      }
+
+      return null;
+    }
   }
 
   public generateNonGapTiles(num: number) {
@@ -106,7 +147,7 @@ export class MonitoringComponent implements OnInit {
       tiles.push(new SimpleTile({
         isGapTile: false,
         id: i,
-        indexOnScene: i,
+        // indexOnScene: i,
         color: 'GREY',
         size: 'standard',
         hasBeenTouched: false,
@@ -135,9 +176,7 @@ export class MonitoringComponent implements OnInit {
           // can be only one tile toggled at a time
           // if multiselectionState is false
           const lastId = this.selectedScene.getLastToggledTileId();
-          if (lastId) {
-            this.selectedScene.toggleTileById(lastId);
-          }
+          if (lastId) this.selectedScene.toggleTileById(lastId);
 
           this.selectedScene.setLastToggledTileId(clickedTile.id);
         } else {

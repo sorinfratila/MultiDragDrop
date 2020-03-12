@@ -21,10 +21,6 @@ export class Scene {
     this.lastToggledTileId = null;
   }
 
-  public getByIndexOnScene(index: number) {
-    return this.simpleTileList.find(t => t.indexOnScene === index);
-  }
-
   public setName(newName: string) {
     this.name = newName;
   }
@@ -41,15 +37,42 @@ export class Scene {
     return this.lastToggledTileId;
   }
 
+  public insertTileAtPosition({ indexToRemoveAt, newIndexOnScene }) {
+    const stlCopy = [...this.simpleTileList];
+    const tile = stlCopy[indexToRemoveAt];
+    const lastGapTile = this.getLastGapTile();
+
+    if (lastGapTile) {
+      stlCopy.splice(lastGapTile.index, 1);
+      stlCopy.splice(indexToRemoveAt, 1, lastGapTile.tile);
+      stlCopy.splice(newIndexOnScene, 0, tile);
+    }
+
+    this.setTileList(stlCopy);
+  }
+
+  private getLastGapTile() {
+    const stlCopy = [...this.simpleTileList];
+    const tile =  stlCopy.reverse().find((t: SimpleTile) => t.isGapTile);
+    if (tile !== undefined) {
+      return {
+        tile,
+        index: this.simpleTileList.findIndex(t => t.id === tile.id),
+      };
+    }
+
+    return null;
+  }
+
   public swapSingleTiles({ fromIndex, toIndex }) {
     const stlCopy = [...this.simpleTileList];
     // new Scene method
     if (typeof fromIndex === 'number' && typeof toIndex === 'number') {
       const tempTile = stlCopy[fromIndex];
       stlCopy[fromIndex] = stlCopy[toIndex];
-      stlCopy[fromIndex].setIndexOnScene(fromIndex);
+      // stlCopy[fromIndex].setIndexOnScene(fromIndex);
       stlCopy[toIndex] = tempTile;
-      stlCopy[toIndex].setIndexOnScene(toIndex);
+      // stlCopy[toIndex].setIndexOnScene(toIndex);
 
       this.setTileList(stlCopy);
 
@@ -108,16 +131,18 @@ export class Scene {
         // no real tiles exist on the monitoring Scene
         return this.simpleTileList.map((tile: SimpleTile, j) => {
           if (monitoringTiles[j]) {
-            const { indexOnScene } = tile;
+            // const { indexOnScene } = tile;
 
             monitoringTiles[j].check(newValue);
-            monitoringTiles[j].setIndexOnScene(indexOnScene);
+            // monitoringTiles[j].setIndexOnScene(indexOnScene);
             monitoringTiles[j].setTouched(true);
             monitoringTiles[j].toggle(false);
             monitoringTiles[j].preToggle(false);
 
             return monitoringTiles[j];
-          } else return tile;
+          }
+
+          return tile;
         });
       } else {
         // some tiles have already been checked and can be seen on the monitoring Scene
@@ -128,7 +153,7 @@ export class Scene {
 
         newMonitoringTile.forEach((tile, i) => {
           tile.check(newValue);
-          tile.setIndexOnScene(index + i);
+          // tile.setIndexOnScene(index + i);
           tile.setTouched(true);
           tile.toggle(false);
           tile.preToggle(false);
@@ -191,15 +216,17 @@ export class Scene {
       if (!tile.checked) {
         // when tile has been UNCHECKED
         const newTile = new SimpleTile({
-          id: tile.indexOnScene,
-          indexOnScene: tile.indexOnScene,
+          id: j,
+          // indexOnScene: tile.indexOnScene,
           size: DEFAULT_TILE.size,
           color: DEFAULT_TILE.color,
           model: DEFAULT_TILE.model,
           hasBeenTouched: true,
         });
 
-        stlc.splice(tile.indexOnScene, 1, newTile);
+        const index = stlc.findIndex(t => t.id === tile.id);
+
+        stlc.splice(index, 1, newTile);
       } else {
         // when tile has been CHECKED
         const lastIndexOf = stlcr.findIndex(t => t.hasBeenTouched);
@@ -207,13 +234,13 @@ export class Scene {
 
         if (lastIndexOf === -1) {
           const removedGapTile = stlc.shift();
-          tile.setIndexOnScene(removedGapTile.indexOnScene);
+          // tile.setIndexOnScene(removedGapTile.indexOnScene);
           tile.setTouched(true);
 
           stlc.unshift(tile);
         } else {
           const index = this.simpleTileList.length - lastIndexOf + j;
-          tile.setIndexOnScene(stlc[index].indexOnScene);
+          // tile.setIndexOnScene(stlc[index].indexOnScene);
           tile.setTouched(true);
 
           stlc.splice(index, 1, tile);
@@ -237,7 +264,7 @@ export class Scene {
       for (let i = 0; i < 200; i++) {
         const tile = new SimpleTile({
           id: i,
-          indexOnScene: i,
+          // indexOnScene: i,
           size: DEFAULT_TILE.size,
           color: DEFAULT_TILE.color,
           model: DEFAULT_TILE.model,

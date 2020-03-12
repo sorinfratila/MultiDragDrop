@@ -8,6 +8,7 @@ import { SimpleTile } from 'src/app/services/SimpleTile';
 })
 export class GapTileComponent implements OnInit {
   @Input() data: SimpleTile;
+  @Input() index: number;
 
   constructor() { }
 

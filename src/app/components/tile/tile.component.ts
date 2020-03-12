@@ -8,6 +8,8 @@ import { SimpleTile } from 'src/app/services/SimpleTile';
 })
 export class TileComponent implements OnInit {
   @Input() data: SimpleTile;
+  @Input() index: number;
+
   constructor() { }
 
   ngOnInit() {

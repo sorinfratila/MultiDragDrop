@@ -9,7 +9,7 @@ export const DEFAULT_TILE = {
     for (let i = 0; i < 200; i++) {
       const tile = new SimpleTile({
         id: i,
-        indexOnScene: i,
+        // indexOnScene: i,
         size: DEFAULT_TILE.size,
         color: DEFAULT_TILE.color,
         model: 'gap-element',

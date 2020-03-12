@@ -1,19 +1,18 @@
-import { sizeEnum, modelEnum, matchingEnum } from 'src/app/models/Device';
 export type colorsEnum = 'GREY' | 'ROSE' | 'YELLOW' | 'BLUE';
 
 export class SimpleTile {
   id: any;
   deviceId?: string;
-  indexOnScene: number;
-  size: sizeEnum;
+  // indexOnScene: number;
+  size: string;
   color: colorsEnum;
   hasBeenTouched: boolean;
-  model?: modelEnum;
+  // model?: modelEnum;
   ip?: string;
   toggled?: boolean;
   preToggled?: boolean;
   frequency?: number;
-  matchingStatus?: matchingEnum;
+  // matchingStatus?: matchingEnum;
   name?: string;
   orderNumber?: number | string;
   checked?: boolean;
@@ -25,7 +24,7 @@ export class SimpleTile {
 
   constructor({
     id,
-    indexOnScene,
+    // indexOnScene,
     size,
     color,
     hasBeenTouched,
@@ -46,17 +45,15 @@ export class SimpleTile {
     draggable = false,
   }) {
     this.id = id;
-    (this.deviceId = deviceId), (this.size = size);
-    this.indexOnScene = indexOnScene;
+    this.deviceId = deviceId;
+    // this.indexOnScene = indexOnScene;
     this.hasBeenTouched = hasBeenTouched;
     this.color = color;
-    this.model = model;
     this.draggable = draggable,
     this.ip = ip;
     this.toggled = toggled;
     this.preToggled = preToggled;
     this.frequency = frequency;
-    this.matchingStatus = matchingStatus;
     this.name = name;
     this.orderNumber = orderNumber;
     this.checked = checked;
@@ -78,13 +75,13 @@ export class SimpleTile {
     this.hasBeenTouched = newValue;
   }
 
-  public setSize(newSize: sizeEnum) {
-    this.size = newSize;
-  }
+  // public setSize(newSize: sizeEnum) {
+  //   this.size = newSize;
+  // }
 
-  public getSize() {
-    return this.size;
-  }
+  // public getSize() {
+  //   return this.size;
+  // }
 
   public getColor() {
     return this.color;
@@ -94,12 +91,12 @@ export class SimpleTile {
     this.draggable = newValue;
   }
 
-  public setIndexOnScene(newIndex: number) {
-    this.indexOnScene = newIndex;
-  }
+  // public setIndexOnScene(newIndex: number) {
+  //   this.indexOnScene = newIndex;
+  // }
 
   public toggle(newValue?: boolean) {
-    if (this.matchingStatus !== 'extra' && !this.isGapTile) {
+    if (!this.isGapTile) {
       if (newValue !== undefined) this.toggled = newValue;
       else this.toggled = !this.toggled;
 
@@ -118,7 +115,7 @@ export class SimpleTile {
       if (this.preToggled === true) this.preToggle();
     }
 
-    if (this.matchingStatus !== 'extra' && !this.isGapTile) {
+    if (!this.isGapTile) {
       if (newValue !== undefined) this.checked = newValue;
       else this.checked = !this.checked;
     }

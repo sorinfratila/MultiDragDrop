@@ -1,5 +1,5 @@
 <div
-  id="monitoring-{{ data.indexOnScene }}"
+  id="monitoring-{{ index }}"
   class="monitoringtile"
   [ngClass]="{ essential: data.size === 'tiny', selected: data.toggled }"
   [attr.standard]="data.size === 'standard' ? 'standard' : null"
@@ -17,7 +17,7 @@
           class="toggle toggle--button"
           [ngClass]="{ 'multi-selection': data.preToggled }"
           [appDraggable]="data.draggable"
-          id="{{ data.indexOnScene }}"
+          id="{{ index }}"
         >
           <div class="check-wrapper">
             <div class="button__icon no__style" *ngIf="data.toggled">
