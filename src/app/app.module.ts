@@ -8,6 +8,7 @@ import { TileComponent } from './components/tile/tile.component';
 import { KeyPressEventsDirective } from './directives/key-press-events.directive';
 import { DraggableDirective } from './directives/draggable.directive';
 import { GapTileComponent } from './components/gap-tile/gap-tile.component';
+import { DragndropDirective } from './directives/dragndrop.directive';
 
 
 @NgModule({
@@ -17,7 +18,8 @@ import { GapTileComponent } from './components/gap-tile/gap-tile.component';
     TileComponent,
     KeyPressEventsDirective,
     DraggableDirective,
-    GapTileComponent
+    GapTileComponent,
+    DragndropDirective
   ],
   imports: [
     BrowserModule,

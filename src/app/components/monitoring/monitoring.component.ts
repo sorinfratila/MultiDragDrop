@@ -17,12 +17,14 @@ export class MonitoringComponent implements OnInit {
   selectedScene: Scene;
 
   dropPointLocation: any = Object.create(null);
+  dragOverTileId: number;
   constructor() {
     this.deviceList = [];
     this.dropPointLocation = {
       hasLeft: '',
       direction: DIRECTION.RIGHT,
     };
+    this.dragOverTileId = 0;
   }
 
   ngOnInit() {
@@ -36,58 +38,52 @@ export class MonitoringComponent implements OnInit {
 
   @HostListener('dragover', ['$event'])
   dragOverHandler = (ev: any) => {
+    const { target } = ev;
     ev.preventDefault();
-    console.log('DRAG over========', ev.target.getAttribute('id'));
-    // console.log(`drag over ${ev.path[2].id ? ev.path[2].id : 'scene'}`);
+    this.dragOverTileId = Number(target.getAttribute('id').replace(/\D/g, '')) === 999
+      ? null
+      : Number(target.getAttribute('id').replace(/\D/g, ''));
   };
 
   @HostListener('dragstart', ['$event'])
   dragStartHandler = (ev: any) => {
     const { target, dataTransfer } = ev;
-    target.style.border = 'dashed';
-    target.style.borderWidth = '0.5px';
-    console.log('target.getAttribute', target.getAttribute('id'));
+    target.style.border = 'dashed 0.2px';
     dataTransfer.setData('Text', ev.target.getAttribute('id'));
+    this.dragOverTileId = Number(target.getAttribute('id').replace(/\D/g, '')) === 999
+      ? null
+      : Number(target.getAttribute('id').replace(/\D/g, ''));
   };
 
   @HostListener('dragenter', ['$event'])
   dragEnterHandler = (ev: any) => {
     const { target } = ev;
-    target.style.border = 'dashed';
-    target.style.borderWidth = '0.5px';
-    console.log('DRAG ENTER =>>>>>', ev);
+    target.style.border = 'dashed 0.2px';
     if (Number(target.getAttribute('id').replace(/\D/g, '')) !== 999) {
       this.dropPointLocation = null;
     }
-    console.log('dropPointLocation', this.dropPointLocation);
   };
 
   @HostListener('dragleave', ['$event'])
   dragLeaveHandler = (ev: any) => {
     const { offsetX, offsetY, target } = ev;
     ev.target.style.border = 'none';
-    console.log('DRAG LEAVE =>>>>>', ev);
     this.dropPointLocation = this.setDropPointLocation({
       target: Number(target.getAttribute('id').replace(/\D/g, '')),
       offsetX,
       offsetY
     });
-    console.log('dropPointLocation', this.dropPointLocation);
   };
 
   @HostListener('drop', ['$event'])
   dropHandler = (ev: any) => {
     ev.preventDefault();
     const data = ev.dataTransfer.getData('Text');
-    // console.log('drop Event ========', ev.path[2].id);
     ev.target.style.border = 'none';
-    const res = ev.path[2].id.replace(/\D/g, '');
 
     try {
-      console.log(data, res);
-      if (data && res) {
-        console.log('SWAPPING TILES');
-        this.selectedScene.swapSingleTiles({ fromIndex: Number(data), toIndex: Number(res) });
+      if (data && this.dragOverTileId) {
+        this.selectedScene.swapSingleTiles({ fromIndex: Number(data), toIndex: this.dragOverTileId });
         this.deviceList = this.selectedScene.simpleTileList;
         // this.sceneService.updateScene(this.selectedScene);
       } else {
@@ -97,7 +93,6 @@ export class MonitoringComponent implements OnInit {
             indexToRemoveAt: Number(data),
             newIndexOnScene: direction === 'left' ? hasLeft : hasLeft + 1
           });
-          // if (direction === 'right') this.selectedScene.swapSingleTiles({ fromIndex: Number(data), toIndex: hasLeft + 1 });
 
           this.deviceList = this.selectedScene.simpleTileList;
         }
@@ -105,17 +100,7 @@ export class MonitoringComponent implements OnInit {
     } catch (e) {
       console.log(e);
     }
-
-    console.log('dropPointLocation', this.dropPointLocation);
   };
-
-  // private dropPointLocationLeft(leftString: string) {
-  //   this.dropPointLocation[0] = leftString;
-  // }
-
-  // private dropPointLocationRight(rightString: string) {
-  //   this.dropPointLocation[1] = rightString;
-  // }
 
   private setDropPointLocation({ offsetX, offsetY, target }) {
     if (offsetY >= 240 || offsetY <= 0) {
@@ -147,7 +132,6 @@ export class MonitoringComponent implements OnInit {
       tiles.push(new SimpleTile({
         isGapTile: false,
         id: i,
-        // indexOnScene: i,
         color: 'GREY',
         size: 'standard',
         hasBeenTouched: false,
