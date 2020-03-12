@@ -1,4 +1,12 @@
-<div class="monitoring__container">
+<div
+  class="monitoring__container"
+  appDragNDrop
+  (dropEvent)="onDrop($event)"
+  (dragStartEvent)="onDragStart($event)"
+  (dragOverEvent)="onDragOver($event)"
+  (dragEnterEvent)="onDragEnter($event)"
+  (dragLeaveEvent)="onDragLeave($event)"
+>
   <div
     id="scene-999"
     class="monitoring__scene"

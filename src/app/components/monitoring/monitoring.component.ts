@@ -5,7 +5,7 @@ import { SimpleTile } from 'src/app/services/SimpleTile';
 const DIRECTION = {
   LEFT: 'left',
   RIGHT: 'right',
-}
+};
 
 @Component({
   selector: 'app-monitoring',
@@ -33,64 +33,36 @@ export class MonitoringComponent implements OnInit {
     this.addTilesToScene(tiles);
 
     this.deviceList = this.selectedScene.simpleTileList;
-    console.log(this.selectedScene);
   }
 
-  @HostListener('dragover', ['$event'])
-  dragOverHandler = (ev: any) => {
-    const { target } = ev;
-    ev.preventDefault();
-    this.dragOverTileId = Number(target.getAttribute('id').replace(/\D/g, '')) === 999
-      ? null
-      : Number(target.getAttribute('id').replace(/\D/g, ''));
-  };
+  public onDragStart(ev: any) {
+    this.dragOverTileId = ev;
+  }
 
-  @HostListener('dragstart', ['$event'])
-  dragStartHandler = (ev: any) => {
-    const { target, dataTransfer } = ev;
-    target.style.border = 'dashed 0.2px';
-    dataTransfer.setData('Text', ev.target.getAttribute('id'));
-    this.dragOverTileId = Number(target.getAttribute('id').replace(/\D/g, '')) === 999
-      ? null
-      : Number(target.getAttribute('id').replace(/\D/g, ''));
-  };
+  public onDragOver(ev: any) {
+    this.dragOverTileId = ev;
+  }
 
-  @HostListener('dragenter', ['$event'])
-  dragEnterHandler = (ev: any) => {
-    const { target } = ev;
-    target.style.border = 'dashed 0.2px';
-    if (Number(target.getAttribute('id').replace(/\D/g, '')) !== 999) {
-      this.dropPointLocation = null;
-    }
-  };
+  public onDragEnter(ev: any) {
+    this.dropPointLocation = ev;
+  }
 
-  @HostListener('dragleave', ['$event'])
-  dragLeaveHandler = (ev: any) => {
-    const { offsetX, offsetY, target } = ev;
-    ev.target.style.border = 'none';
-    this.dropPointLocation = this.setDropPointLocation({
-      target: Number(target.getAttribute('id').replace(/\D/g, '')),
-      offsetX,
-      offsetY
-    });
-  };
+  public onDragLeave(ev: any) {
+    this.dropPointLocation = ev;
+  }
 
-  @HostListener('drop', ['$event'])
-  dropHandler = (ev: any) => {
-    ev.preventDefault();
-    const data = ev.dataTransfer.getData('Text');
-    ev.target.style.border = 'none';
-
+  public onDrop(ev: any) {
+    const { transferData } = ev;
     try {
-      if (data && this.dragOverTileId) {
-        this.selectedScene.swapSingleTiles({ fromIndex: Number(data), toIndex: this.dragOverTileId });
+      if (transferData && this.dragOverTileId) {
+        this.selectedScene.swapSingleTiles({ fromIndex: Number(transferData), toIndex: this.dragOverTileId });
         this.deviceList = this.selectedScene.simpleTileList;
         // this.sceneService.updateScene(this.selectedScene);
       } else {
         if (this.dropPointLocation) {
           const { hasLeft, direction } = this.dropPointLocation;
           this.selectedScene.insertTileAtPosition({
-            indexToRemoveAt: Number(data),
+            indexToRemoveAt: Number(transferData),
             newIndexOnScene: direction === 'left' ? hasLeft : hasLeft + 1
           });
 
@@ -99,30 +71,6 @@ export class MonitoringComponent implements OnInit {
       }
     } catch (e) {
       console.log(e);
-    }
-  };
-
-  private setDropPointLocation({ offsetX, offsetY, target }) {
-    if (offsetY >= 240 || offsetY <= 0) {
-      // it means the tile has been dragged either from above or from below
-      // nothing happens
-      return null;
-    } else {
-      if (target !== 999) {
-        if (offsetX >= 140) {
-          return {
-            hasLeft: target,
-            direction: DIRECTION.RIGHT,
-          };
-        }
-
-        return {
-          hasLeft: target,
-          direction: DIRECTION.LEFT,
-        };
-      }
-
-      return null;
     }
   }
 
