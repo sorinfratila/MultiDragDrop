@@ -2,6 +2,7 @@
   id="scene-wrapper"
   class="monitoring__container"
   appDragNDrop
+  [multiSelectionState]="multiSelectionState"
   (dropEvent)="onDrop($event)"
   (dragStartEvent)="onDragStart($event)"
   (dragOverEvent)="onDragOver($event)"

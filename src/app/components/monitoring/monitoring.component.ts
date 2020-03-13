@@ -16,11 +16,13 @@ const DIRECTION = {
 export class MonitoringComponent implements OnInit {
   deviceList: any[];
   selectedScene: Scene;
+  multiSelectionState: boolean;
 
   dropPointLocation: any = Object.create(null);
   dragOverTileId: number;
   constructor() {
     this.deviceList = [];
+    this.multiSelectionState = false;
     this.dropPointLocation = {
       hasLeft: '',
       direction: DIRECTION.RIGHT,
@@ -137,7 +139,8 @@ export class MonitoringComponent implements OnInit {
       if (this.selectedScene.isAnyTileToggled()) {
         if (!this.selectedScene.getMultiSelectionState()) {
           this.selectedScene.toggleMultiSelection(true);
-        }
+          this.multiSelectionState = true;
+        } else this.multiSelectionState = false;
         this.selectedScene.setLastToggledTileId(null);
       }
       clickedTile.toggle();
@@ -151,6 +154,7 @@ export class MonitoringComponent implements OnInit {
     // if (platform === 'MacIntel') {
     if (metaKey || ctrlKey) {
       this.selectedScene.toggleMultiSelection(true);
+      this.multiSelectionState = true;
       this.selectedScene.toggleAllTiles(true);
     }
     // } else {
@@ -165,6 +169,7 @@ export class MonitoringComponent implements OnInit {
   onEscapePressed = (ev: KeyboardEvent) => {
     if (ev) {
       this.selectedScene.toggleMultiSelection(false);
+      this.multiSelectionState = false;
       this.selectedScene.toggleAllTiles(false);
       this.selectedScene.setLastToggledTileId(null);
     }

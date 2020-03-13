@@ -91,7 +91,7 @@ $canvas-fill: #d5d5d5;
       display: flex;
 
       .check-wrapper {
-        z-index: -1; //added z index so that dragover event doesn't recognize it
+        z-index: -10; //added z index so that dragover event doesn't recognize it
         position: relative;
         display: flex;
         justify-content: center;
@@ -255,7 +255,6 @@ $canvas-fill: #d5d5d5;
     z-index: 1;
   }
 
-
   &.essential {
     border-bottom: none;
   }
@@ -290,7 +289,7 @@ $canvas-fill: #d5d5d5;
       align-items: center;
 
       p {
-      //   @extend .truncate;
+        //   @extend .truncate;
         display: flex;
         align-items: center;
         height: 100%;

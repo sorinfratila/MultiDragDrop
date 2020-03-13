@@ -13,11 +13,7 @@
     <section class="overlay">
       <div class="overlay__content overlay__content--multiselect" [ngClass]="{ selected: data.toggled }">
         <input type="checkbox" class="selection-checkbox" [checked]="data.toggled" id="multiselectMaxID{{ data.id }}" />
-        <label
-          for="multiselectMaxID{{ data.id }}"
-          class="toggle toggle--button"
-          [ngClass]="{ 'multi-selection': data.preToggled }"
-        >
+        <label class="toggle toggle--button" [ngClass]="{ 'multi-selection': data.preToggled }" id="label-{{ index }}">
           <div class="check-wrapper">
             <div class="button__icon no__style" *ngIf="data.toggled">
               <svg>
