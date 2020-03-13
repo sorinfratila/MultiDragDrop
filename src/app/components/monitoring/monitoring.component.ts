@@ -5,12 +5,13 @@ import { SimpleTile } from 'src/app/services/SimpleTile';
 const DIRECTION = {
   LEFT: 'left',
   RIGHT: 'right',
+  ABOVE_OR_BELLOW: 'aboveOrBellow',
 };
 
 @Component({
   selector: 'app-monitoring',
   templateUrl: './monitoring.component.html',
-  styleUrls: ['./monitoring.component.scss']
+  styleUrls: ['./monitoring.component.scss'],
 })
 export class MonitoringComponent implements OnInit {
   deviceList: any[];
@@ -59,11 +60,13 @@ export class MonitoringComponent implements OnInit {
         this.deviceList = this.selectedScene.simpleTileList;
         // this.sceneService.updateScene(this.selectedScene);
       } else {
-        if (this.dropPointLocation) {
+        console.log(this.dropPointLocation);
+
+        if (this.dropPointLocation.hasLeft) {
           const { hasLeft, direction } = this.dropPointLocation;
           this.selectedScene.insertTileAtPosition({
             indexToRemoveAt: Number(transferData),
-            newIndexOnScene: direction === 'left' ? hasLeft : hasLeft + 1
+            newIndexOnScene: direction === 'left' ? hasLeft : hasLeft + 1,
           });
 
           this.deviceList = this.selectedScene.simpleTileList;
@@ -77,14 +80,16 @@ export class MonitoringComponent implements OnInit {
   public generateNonGapTiles(num: number) {
     const tiles = [];
     for (let i = 0; i < num; i++) {
-      tiles.push(new SimpleTile({
-        isGapTile: false,
-        id: i,
-        color: 'GREY',
-        size: 'standard',
-        hasBeenTouched: false,
-        draggable: false,
-      }));
+      tiles.push(
+        new SimpleTile({
+          isGapTile: false,
+          id: i,
+          color: 'GREY',
+          size: 'standard',
+          hasBeenTouched: false,
+          draggable: false,
+        }),
+      );
     }
 
     return tiles;
@@ -117,7 +122,7 @@ export class MonitoringComponent implements OnInit {
       }
     }
 
-    console.log('clickedTile', clickedTile)
+    console.log('clickedTile', clickedTile);
   }
 
   onCtrlClick = (ev: any, clickedTile: SimpleTile) => {
@@ -142,7 +147,7 @@ export class MonitoringComponent implements OnInit {
       clickedTile.toggle();
       this.selectedScene.setLastToggledTileId(clickedTile.id);
     }
-  }
+  };
 
   onMetaKeyAPressed = (ev: any) => {
     // const { platform } = window.navigator;

@@ -1,4 +1,5 @@
 <div
+  id="scene-wrapper"
   class="monitoring__container"
   appDragNDrop
   (dropEvent)="onDrop($event)"
@@ -14,11 +15,7 @@
     (metaKeyAPressed)="onMetaKeyAPressed($event)"
     (escapePressed)="onEscapePressed($event)"
   >
-    <div
-      id="wrapper-{{ i }}"
-      *ngFor="let tile of deviceList; let i = index"
-      (click)="toggle(tile, $event)"
-    >
+    <div id="wrapper-{{ i }}" *ngFor="let tile of deviceList; let i = index" (click)="toggle(tile, $event)">
       <app-tile
         *ngIf="!tile.isGapTile"
         id="t-{{ i }}"
@@ -27,13 +24,7 @@
         [data]="tile"
         [index]="i"
       ></app-tile>
-      <app-gap-tile
-        *ngIf="tile.isGapTile"
-        id="t-{{ i }}"
-        class="gap__tile"
-        [data]="tile"
-        [index]="i"
-      ></app-gap-tile>
+      <app-gap-tile *ngIf="tile.isGapTile" id="t-{{ i }}" class="gap__tile" [data]="tile" [index]="i"></app-gap-tile>
     </div>
   </div>
 </div>

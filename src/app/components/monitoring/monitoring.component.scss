@@ -7,6 +7,15 @@
   max-height: 2160px;
   height: 100vh;
 
+  // #insertHere {
+  //   position: absolute;
+  //   min-width: 2rem;
+  //   max-width: 2rem;
+  //   min-height: 24rem;
+  //   max-height: 24rem;
+  //   background-color: red;
+  // }
+
   /* Prevent the text contents of draggable elements from being selectable. */
   [draggable] {
     -webkit-user-select: none;
