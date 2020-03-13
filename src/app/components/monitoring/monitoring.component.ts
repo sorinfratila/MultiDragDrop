@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Scene } from 'src/app/services/Scene';
 import { SimpleTile } from 'src/app/services/SimpleTile';
 
@@ -55,14 +55,12 @@ export class MonitoringComponent implements OnInit {
   public onDrop(ev: any) {
     const { transferData } = ev;
     try {
-      if (transferData && this.dragOverTileId) {
+      if (transferData && typeof this.dragOverTileId === 'number') {
         this.selectedScene.swapSingleTiles({ fromIndex: Number(transferData), toIndex: this.dragOverTileId });
         this.deviceList = this.selectedScene.simpleTileList;
         // this.sceneService.updateScene(this.selectedScene);
       } else {
-        console.log(this.dropPointLocation);
-
-        if (this.dropPointLocation.hasLeft) {
+        if (this.dropPointLocation.hasLeft !== null) {
           const { hasLeft, direction } = this.dropPointLocation;
           this.selectedScene.insertTileAtPosition({
             indexToRemoveAt: Number(transferData),
@@ -121,8 +119,6 @@ export class MonitoringComponent implements OnInit {
         }
       }
     }
-
-    console.log('clickedTile', clickedTile);
   }
 
   onCtrlClick = (ev: any, clickedTile: SimpleTile) => {

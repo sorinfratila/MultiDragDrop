@@ -68,8 +68,6 @@ export class DragndropDirective {
   @HostListener('dragstart', ['$event'])
   dragStartHandler = (ev: any) => {
     const { target, dataTransfer } = ev;
-    target.style.border = 'dashed 0.2px';
-    target.style.opacity = '0.5';
     dataTransfer.setData('Text', ev.target.getAttribute('id'));
     this.dragOverTileId =
       Number(target.getAttribute('id').replace(/\D/g, '')) === 999
@@ -83,8 +81,9 @@ export class DragndropDirective {
   dragEnterHandler = (ev: any) => {
     const { target } = ev;
     try {
-      target.style.border = 'dashed 0.2px';
-
+      // TODO: move style into a class and add/remove the class
+      target.style.outline = 'dashed 0.2px';
+      target.style.outlineWidth = '3px';
       if (Number(target.getAttribute('id').replace(/\D/g, '')) !== 999) {
         target.style.opacity = '0.5';
         this.dragEnterEvent.emit(null);
@@ -98,7 +97,8 @@ export class DragndropDirective {
   dragLeaveHandler = (ev: any) => {
     const { offsetX, offsetY, target } = ev;
     try {
-      ev.target.style.border = 'none';
+      // TODO: move style into a class and add/remove the class
+      ev.target.style.outline = 'none';
       target.style.opacity = '1';
       const res = Number(target.getAttribute('id').replace(/\D/g, ''));
       // TODO: logic to add an element that shows where the drop will be made, needs further refinment
@@ -127,7 +127,8 @@ export class DragndropDirective {
     try {
       ev.preventDefault();
       const transferData = ev.dataTransfer.getData('Text');
-      target.style.border = 'none';
+      // TODO: move style into a class and add/remove the class
+      target.style.outline = 'none';
       target.style.opacity = '1';
       this.dropEvent.emit({ transferData });
     } catch (e) {

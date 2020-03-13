@@ -1,8 +1,9 @@
 <div
-  id="monitoring-{{ index }}"
+  id="{{ index }}"
   class="monitoringtile"
   [ngClass]="{ essential: data.size === 'tiny', selected: data.toggled }"
   [attr.standard]="data.size === 'standard' ? 'standard' : null"
+  [appDraggable]="data.draggable"
 >
   <header class="monitoringtile__header">
     <h2 class="monitoringtile__header__title">#tile-{{ data.id }}</h2>
@@ -16,8 +17,6 @@
           for="multiselectMaxID{{ data.id }}"
           class="toggle toggle--button"
           [ngClass]="{ 'multi-selection': data.preToggled }"
-          [appDraggable]="data.draggable"
-          id="{{ index }}"
         >
           <div class="check-wrapper">
             <div class="button__icon no__style" *ngIf="data.toggled">

@@ -19,12 +19,11 @@
       <app-tile
         *ngIf="!tile.isGapTile"
         id="t-{{ i }}"
-        class="tile"
         (contextmenu)="onCtrlClick($event, tile)"
         [data]="tile"
         [index]="i"
       ></app-tile>
-      <app-gap-tile *ngIf="tile.isGapTile" id="t-{{ i }}" class="gap__tile" [data]="tile" [index]="i"></app-gap-tile>
+      <app-gap-tile *ngIf="tile.isGapTile" id="t-{{ i }}" [data]="tile" [index]="i"></app-gap-tile>
     </div>
   </div>
 </div>
