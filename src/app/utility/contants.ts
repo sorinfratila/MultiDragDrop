@@ -6,7 +6,7 @@ export const DEFAULT_TILE = {
   model: 'gap-element',
   list() {
     const newTileList = [];
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 250; i++) {
       const tile = new SimpleTile({
         id: i,
         // indexOnScene: i,

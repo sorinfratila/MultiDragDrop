@@ -3,7 +3,7 @@ export type colorsEnum = 'GREY' | 'ROSE' | 'YELLOW' | 'BLUE';
 export class SimpleTile {
   id: any;
   deviceId?: string;
-  // indexOnScene: number;
+  indexOnScene?: number;
   size: string;
   color: colorsEnum;
   hasBeenTouched: boolean;
@@ -49,8 +49,7 @@ export class SimpleTile {
     // this.indexOnScene = indexOnScene;
     this.hasBeenTouched = hasBeenTouched;
     this.color = color;
-    this.draggable = draggable,
-    this.ip = ip;
+    (this.draggable = draggable), (this.ip = ip);
     this.toggled = toggled;
     this.preToggled = preToggled;
     this.frequency = frequency;

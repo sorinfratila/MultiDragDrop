@@ -17,10 +17,12 @@ export class MonitoringComponent implements OnInit {
   deviceList: any[];
   selectedScene: Scene;
   multiSelectionState: boolean;
+  selectedIds: string[];
 
   dropPointLocation: any = Object.create(null);
   dragOverTileId: number;
   constructor() {
+    this.selectedIds = [];
     this.deviceList = [];
     this.multiSelectionState = false;
     this.dropPointLocation = {
@@ -56,20 +58,41 @@ export class MonitoringComponent implements OnInit {
 
   public onDrop(ev: any) {
     const { transferData } = ev;
+
     try {
-      if (transferData && typeof this.dragOverTileId === 'number') {
-        this.selectedScene.swapSingleTiles({ fromIndex: Number(transferData), toIndex: this.dragOverTileId });
-        this.deviceList = this.selectedScene.simpleTileList;
-        // this.sceneService.updateScene(this.selectedScene);
-      } else {
-        if (this.dropPointLocation.hasLeft !== null) {
-          const { hasLeft, direction } = this.dropPointLocation;
-          this.selectedScene.insertTileAtPosition({
-            indexToRemoveAt: Number(transferData),
-            newIndexOnScene: direction === 'left' ? hasLeft : hasLeft + 1,
+      if (typeof transferData !== 'string') {
+        // logic for dropping multiple tiles
+
+        const { hasLeft, direction } = this.dropPointLocation;
+        if (this.dragOverTileId === null) {
+          // only do some actions if dropping in between tiles
+
+          this.selectedScene.insertTilesAtPosition({
+            startIndexToRemove: Number(transferData[0]),
+            startIndexToInsert: direction === 'left' ? hasLeft : hasLeft + 1,
+            tileIndexArr: transferData,
           });
 
           this.deviceList = this.selectedScene.simpleTileList;
+        }
+      } else {
+        // logic for dealing with single tile swap
+
+        if (transferData && typeof this.dragOverTileId === 'number') {
+          this.selectedScene.swapSingleTiles({ fromIndex: Number(transferData), toIndex: this.dragOverTileId });
+          this.deviceList = this.selectedScene.simpleTileList;
+          // this.sceneService.updateScene(this.selectedScene);
+        } else {
+          if (this.dropPointLocation.hasLeft !== null) {
+            // logic for dealing with single tile dropping at position between other tiles
+            const { hasLeft, direction } = this.dropPointLocation;
+            this.selectedScene.insertTileAtPosition({
+              indexToRemoveAt: Number(transferData),
+              newIndexOnScene: direction === 'left' ? hasLeft : hasLeft + 1,
+            });
+
+            this.deviceList = this.selectedScene.simpleTileList;
+          }
         }
       }
     } catch (e) {
@@ -106,15 +129,20 @@ export class MonitoringComponent implements OnInit {
     if (e.metaKey) this.onCtrlClick(e, clickedTile);
     else {
       clickedTile.toggle();
+      setTimeout(() => {
+        this.selectedIds = this.getAllDraggable();
+      }, 100);
+
+      console.log('clickedTile', clickedTile);
 
       if (!this.selectedScene.getMultiSelectionState()) {
+        console.log(clickedTile.toggled);
         if (clickedTile.toggled === true) {
           // toggling the last tile toggled, becasue there
           // can be only one tile toggled at a time
           // if multiselectionState is false
           const lastId = this.selectedScene.getLastToggledTileId();
-          if (lastId) this.selectedScene.toggleTileById(lastId);
-
+          if (lastId !== null) this.selectedScene.toggleTileById(lastId);
           this.selectedScene.setLastToggledTileId(clickedTile.id);
         } else {
           this.selectedScene.setLastToggledTileId(null);
@@ -140,12 +168,31 @@ export class MonitoringComponent implements OnInit {
         if (!this.selectedScene.getMultiSelectionState()) {
           this.selectedScene.toggleMultiSelection(true);
           this.multiSelectionState = true;
-        } else this.multiSelectionState = false;
+        }
         this.selectedScene.setLastToggledTileId(null);
       }
       clickedTile.toggle();
+      setTimeout(() => {
+        this.selectedIds = this.getAllDraggable();
+      }, 100);
       this.selectedScene.setLastToggledTileId(clickedTile.id);
     }
+  };
+
+  private getAllDraggable = () => {
+    const array = [];
+    document.querySelectorAll('.monitoringtile[draggable="true"]').forEach(el => {
+      array.push(el.getAttribute('id'));
+    });
+
+    array.sort((a, b) => {
+      const numA = Number(a);
+      const numB = Number(b);
+
+      return numA < numB ? -1 : numA > numB ? 1 : 0;
+    });
+    console.log(array);
+    return array;
   };
 
   onMetaKeyAPressed = (ev: any) => {

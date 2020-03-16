@@ -8,11 +8,7 @@ export class Scene {
   multiSelectionState: boolean;
   lastToggledTileId: any;
 
-  constructor(
-    name: string,
-    selected: boolean,
-    simpleTileList?: SimpleTile[]
-  ) {
+  constructor(name: string, selected: boolean, simpleTileList?: SimpleTile[]) {
     this.name = name;
     if (simpleTileList) this.simpleTileList = this.instantiateTiles(simpleTileList);
     else this.simpleTileList = this.instantiateTiles();
@@ -37,50 +33,114 @@ export class Scene {
     return this.lastToggledTileId;
   }
 
+  /**
+   * FOR SINGLE TILE DRAG
+   * @param indexToRemoveAt - where to remove the dragged tile from
+   * @param newIndexOnScene - where to insert the dropped tile
+   */
   public insertTileAtPosition({ indexToRemoveAt, newIndexOnScene }) {
     const stlCopy = [...this.simpleTileList];
     const tile = stlCopy[indexToRemoveAt];
-    const lastGapTile = this.getLastGapTile();
+    const res = this.getGapTileAfterIndex({ indexToStartAt: indexToRemoveAt });
 
-    if (lastGapTile) {
-      stlCopy.splice(lastGapTile.index, 1);
-      stlCopy.splice(indexToRemoveAt, 1, lastGapTile.tile);
-      stlCopy.splice(newIndexOnScene, 0, tile);
+    if (res) {
+      stlCopy.splice(res.index, 1); // remove the gapTile from the list
+      stlCopy.splice(indexToRemoveAt, 1, res.tile); // replace indexToRemoveAt position with the gap tile
+      stlCopy.splice(newIndexOnScene, 0, tile); // insert the dragged tile at newIndexOnScene position
     }
 
     this.setTileList(stlCopy);
   }
 
-  private getLastGapTile() {
+  /**
+   * FOR MULTI TILE DRAG
+   * function used to replace the dragged tiles with gap tiles upon
+   * droppping to the new positions - also moves the selected tiles to the new positions @startIndexToInsert
+   * @param startIndexToRemove - the first selected tile index
+   * @param startIndexToInsert - the index to start inserting the dragging selected tiles
+   * @param tileIndexArr - the array of indexes of the
+   */
+  public insertTilesAtPosition({ startIndexToRemove, startIndexToInsert, tileIndexArr }) {
     const stlCopy = [...this.simpleTileList];
-    const tile =  stlCopy.reverse().find((t: SimpleTile) => t.isGapTile);
+    const length = tileIndexArr.length;
+
+    // holds the gapTiles extracted from the simpleTileList to be placed
+    // at the current positions of the selected tiles to be dragged
+    const gapTileArr = [];
+
+    for (let i = 0; i < length; i++) {
+      // going through the simpleTileList to get the same amount of gapTiles
+      // as selectedTiles to be used as replacement on the grid;
+      const index = stlCopy.findIndex((t, j) => t.isGapTile && j > startIndexToRemove);
+      if (index !== -1) {
+        const res = stlCopy.splice(index, 1);
+        gapTileArr.push(res[0]);
+      }
+    }
+
+    if (gapTileArr && gapTileArr.length === tileIndexArr.length) {
+      if (startIndexToRemove < startIndexToInsert) {
+        // if dragging tiles after the initial position
+
+        tileIndexArr.reverse().forEach((index: string) => {
+          // for each index, replace the the tile with the gapTiles
+          // and then insert the tiles at the new positions
+
+          const res = stlCopy.splice(Number(index), 1, gapTileArr.shift());
+          stlCopy.splice(startIndexToInsert, 0, res[0]); //
+        });
+      }
+
+      if (startIndexToRemove > startIndexToInsert) {
+        // if dragging tiles before the initial position
+
+        tileIndexArr.reverse().forEach((index: string, j: number) => {
+          // for each index, replace the the tile with the gapTiles
+          // and then insert the tiles at the new positions
+
+          const res = stlCopy.splice(Number(index) + j, 1, gapTileArr.shift());
+          stlCopy.splice(startIndexToInsert, 0, res[0]);
+        });
+      }
+
+      this.setTileList(stlCopy);
+    } else {
+      throw new Error('There are no more gap tiles to be used');
+    }
+  }
+
+  /**
+   * FOR SINGLE TILE DRAG
+   * used to get a gap tile as replacement for a dragged and dropped selected tile
+   * @param indexToStartAt - start looking from this index
+   */
+  private getGapTileAfterIndex({ indexToStartAt }) {
+    const stlCopy = [...this.simpleTileList];
+    const tile = stlCopy.find((t: SimpleTile, i) => t.isGapTile && i > indexToStartAt);
     if (tile !== undefined) {
       return {
         tile,
-        index: this.simpleTileList.findIndex(t => t.id === tile.id),
+        index: stlCopy.findIndex(t => t.id === tile.id),
       };
     }
-
     return null;
   }
 
+  /**
+   * FOR SINGLE TILE DRAG
+   * swap tiles
+   * @param fromIndex - index to remove the tile from
+   * @param toIndex - index to insert the tile to
+   */
   public swapSingleTiles({ fromIndex, toIndex }) {
     const stlCopy = [...this.simpleTileList];
-    // new Scene method
     if (typeof fromIndex === 'number' && typeof toIndex === 'number') {
       const tempTile = stlCopy[fromIndex];
       stlCopy[fromIndex] = stlCopy[toIndex];
-      // stlCopy[fromIndex].setIndexOnScene(fromIndex);
       stlCopy[toIndex] = tempTile;
-      // stlCopy[toIndex].setIndexOnScene(toIndex);
 
       this.setTileList(stlCopy);
-
     } else throw new Error('fromIndex or toIndex is not a number');
-  }
-
-  public getCheckedTilesLength() {
-    return this.simpleTileList.filter((t: SimpleTile) => t.checked).length;
   }
 
   public toggleTileById(id: any, newValue?: boolean) {
@@ -209,6 +269,7 @@ export class Scene {
 
   public async reArrange(tiles: SimpleTile[]): Promise<any> {
     // re-arrange algorithm when CHECKING or UNCHECKING a tile
+    // a gap tile is placed in the position of the unchecked tile on every uncheck
     const stlc = [...this.simpleTileList];
     const stlcr = [...this.simpleTileList].reverse();
 
@@ -259,9 +320,9 @@ export class Scene {
       }, []);
     } else {
       const tileArray = [];
-      // 200 is the maximum number of TILES that can be in each SCENE
-      // there will always be 200 Tiles in every Scene, most of them probably gap Tiles
-      for (let i = 0; i < 200; i++) {
+      // 250 is the maximum number of TILES that can be in each SCENE
+      // there will always be 250 Tiles in every Scene, most of them probably gap Tiles
+      for (let i = 0; i < 250; i++) {
         const tile = new SimpleTile({
           id: i,
           // indexOnScene: i,
