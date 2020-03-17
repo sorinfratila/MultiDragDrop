@@ -43,6 +43,8 @@ export class Scene {
     const tile = stlCopy[indexToRemoveAt];
     const res = this.getGapTileAfterIndex({ indexToStartAt: indexToRemoveAt });
 
+    console.log(res);
+
     if (res) {
       stlCopy.splice(res.index, 1); // remove the gapTile from the list
       stlCopy.splice(indexToRemoveAt, 1, res.tile); // replace indexToRemoveAt position with the gap tile
@@ -71,10 +73,11 @@ export class Scene {
     for (let i = 0; i < length; i++) {
       // going through the simpleTileList to get the same amount of gapTiles
       // as selectedTiles to be used as replacement on the grid;
-      const index = stlCopy.findIndex((t, j) => t.isGapTile && j > startIndexToRemove);
+      const index = stlCopy.findIndex((t, j) => t.isGapTile && j > startIndexToRemove && !t.hasBeenTouched);
       // TODO: needs fixing - update all touchedTiles so that we pick up first gapTile that was not touched
       if (index !== -1) {
         const res = stlCopy.splice(index, 1);
+        res[0].setTouched(true);
         gapTileArr.push(res[0]);
       }
     }
@@ -117,9 +120,10 @@ export class Scene {
    */
   private getGapTileAfterIndex({ indexToStartAt }) {
     const stlCopy = [...this.simpleTileList];
-    const tile = stlCopy.find((t: SimpleTile, i) => t.isGapTile && i > indexToStartAt);
+    const tile = stlCopy.find((t: SimpleTile, i) => t.isGapTile && i > indexToStartAt && !t.hasBeenTouched);
     // TODO: needs fixing - update all touchedTiles so that we pick up first gapTile that was not touched
     if (tile !== undefined) {
+      tile.setTouched(true);
       return {
         tile,
         index: stlCopy.findIndex(t => t.id === tile.id),
@@ -140,6 +144,8 @@ export class Scene {
       const tempTile = stlCopy[fromIndex];
       stlCopy[fromIndex] = stlCopy[toIndex];
       stlCopy[toIndex] = tempTile;
+
+      stlCopy[fromIndex].setTouched(true);
 
       this.setTileList(stlCopy);
     } else throw new Error('fromIndex or toIndex is not a number');
@@ -180,10 +186,7 @@ export class Scene {
   public async checkAllTiles(newValue: boolean, monitoringTiles: SimpleTile[]): Promise<SimpleTile[]> {
     const stlc = [...this.simpleTileList];
     const stlcr = [...this.simpleTileList].reverse();
-    const monMap = new Map();
     const tMap = new Map();
-
-    monitoringTiles.forEach(tile => monMap.set(tile.id, tile));
 
     if (newValue) {
       // when CHECKING all tiles => newValue === true

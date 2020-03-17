@@ -247,9 +247,7 @@ export class DragndropDirective {
 
       if (this.multiSelectionState === true) {
         // remove the dragIcon with number of dragged tiles after drop
-        const dragIcon = document.getElementById('dragIcon');
-        const elem = document.getElementById('scene-wrapper');
-        if (dragIcon && elem) elem.removeChild(dragIcon);
+        this.removeElementById({ idToRemove: 'dragIcon', idToRemoveFrom: 'scene-wrapper' });
 
         if (this.selectedIds.length === 1) {
           // in case of multiselection but still only one element is dragged
@@ -305,13 +303,11 @@ export class DragndropDirective {
     }
   }
 
-  private setDragOverPosition({}) {}
-
   private removeElementById({ idToRemove, idToRemoveFrom }) {
     // removing the previously added hightlighting element when leaving the drop area
     const divToRemove = document.getElementById(idToRemove);
-    const sceneWrapper = document.getElementById(idToRemoveFrom);
-    if (sceneWrapper && divToRemove) sceneWrapper.removeChild(divToRemove);
+    const container = document.getElementById(idToRemoveFrom);
+    if (container && divToRemove) container.removeChild(divToRemove);
   }
 
   private createDropHighlight({ top, left, right, direction }) {
