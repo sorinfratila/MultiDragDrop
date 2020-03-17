@@ -63,6 +63,10 @@ $canvas-fill: #d5d5d5;
   overflow: hidden;
   position: relative;
 
+  &.highlight {
+    outline: dashed 3px;
+  }
+
   display: flex;
   flex-flow: column;
   justify-content: flex-start;
@@ -133,6 +137,10 @@ $canvas-fill: #d5d5d5;
         align-content: stretch;
         flex: 1 1 auto;
         cursor: pointer;
+
+        &.highlight {
+          outline: dashed 3px;
+        }
 
         .btn--icon {
           visibility: hidden;

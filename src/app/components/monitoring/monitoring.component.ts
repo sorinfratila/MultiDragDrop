@@ -58,12 +58,17 @@ export class MonitoringComponent implements OnInit {
 
   public onDrop(ev: any) {
     const { transferData } = ev;
+    console.log('dropPointLocation', this.dropPointLocation);
+    console.log('dragOverTileId', this.dragOverTileId);
+    this.selectedScene.toggleAllTiles(false);
 
     try {
       if (typeof transferData !== 'string') {
         // logic for dropping multiple tiles
 
         const { hasLeft, direction } = this.dropPointLocation;
+        console.log(hasLeft, direction, this.dragOverTileId);
+
         if (this.dragOverTileId === null) {
           // only do some actions if dropping in between tiles
 
@@ -97,6 +102,7 @@ export class MonitoringComponent implements OnInit {
       }
     } catch (e) {
       console.log(e);
+      // TODO: add notification here
     }
   }
 

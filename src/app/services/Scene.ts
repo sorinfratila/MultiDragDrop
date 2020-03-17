@@ -72,6 +72,7 @@ export class Scene {
       // going through the simpleTileList to get the same amount of gapTiles
       // as selectedTiles to be used as replacement on the grid;
       const index = stlCopy.findIndex((t, j) => t.isGapTile && j > startIndexToRemove);
+      // TODO: needs fixing - update all touchedTiles so that we pick up first gapTile that was not touched
       if (index !== -1) {
         const res = stlCopy.splice(index, 1);
         gapTileArr.push(res[0]);
@@ -117,6 +118,7 @@ export class Scene {
   private getGapTileAfterIndex({ indexToStartAt }) {
     const stlCopy = [...this.simpleTileList];
     const tile = stlCopy.find((t: SimpleTile, i) => t.isGapTile && i > indexToStartAt);
+    // TODO: needs fixing - update all touchedTiles so that we pick up first gapTile that was not touched
     if (tile !== undefined) {
       return {
         tile,

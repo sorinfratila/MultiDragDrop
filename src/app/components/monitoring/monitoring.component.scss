@@ -5,16 +5,7 @@
   position: relative;
   max-width: 4096px;
   max-height: 2680px;
-  // height: 100vh;
-
-  // #insertHere {
-  //   position: absolute;
-  //   min-width: 2rem;
-  //   max-width: 2rem;
-  //   min-height: 24rem;
-  //   max-height: 24rem;
-  //   background-color: red;
-  // }
+  height: 100vh;
 
   /* Prevent the text contents of draggable elements from being selectable. */
   [draggable] {
@@ -23,16 +14,6 @@
     /* Required to make elements draggable in old WebKit */
     -webkit-user-drag: element;
   }
-
-  // .multi__drag__icon {
-  // position: absolute;
-  // text-align: center;
-  // left: -1000px;
-  // width: 50px;
-  // height: 50px;
-  // border-radius: 50px;
-  // background-color: $sennheiser-blue;
-  // }
 
   .monitoring__scene {
     padding: 10px;
@@ -48,6 +29,10 @@
     overflow-x: scroll;
     position: relative;
     width: stretch;
+
+    &.highlight {
+      outline: dashed 3px;
+    }
 
     .gap__tile {
       // margin: 1rem;

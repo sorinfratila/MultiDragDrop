@@ -1,8 +1,8 @@
 <div
   id="{{ index }}"
   class="monitoringtile"
-  [ngClass]="{ essential: data.size === 'tiny', selected: data.toggled }"
-  [attr.standard]="data.size === 'standard' ? 'standard' : null"
+  [ngClass]="{ selected: data.toggled }"
+  standard
   [appDraggable]="data.draggable"
 >
   <header class="monitoringtile__header">
@@ -15,11 +15,7 @@
         <input type="checkbox" class="selection-checkbox" [checked]="data.toggled" id="multiselectMaxID{{ data.id }}" />
         <label class="toggle toggle--button" [ngClass]="{ 'multi-selection': data.preToggled }" id="label-{{ index }}">
           <div class="check-wrapper">
-            <div class="button__icon no__style" *ngIf="data.toggled">
-              <svg>
-                <use xlink:href="assets/icons/symbol-defs.svg#icon-check"></use>
-              </svg>
-            </div>
+            <div class="button__icon no__style" *ngIf="data.toggled"></div>
           </div>
         </label>
       </div>
