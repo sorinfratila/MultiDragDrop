@@ -48,26 +48,55 @@ export class DragndropDirective {
       const { target, offsetX } = ev;
       const id = target.getAttribute('id').replace(/\D/g, '');
       ev.preventDefault();
-      if (offsetX >= -0 && offsetX <= 70) {
-        // positioned leftside of the tile
-        const pos = DRAG_OVER_POSITION.LEFT_SIDE;
-        if (pos !== this.dragOverPosition) {
-          this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
-          this.dragOverPosition = DRAG_OVER_POSITION.LEFT_SIDE;
+      if (this.multiSelectionState && this.selectedIds.length > 1) {
+        if (offsetX >= -0 && offsetX <= 70) {
+          // positioned leftside of the tile
+          // only create the highlight when multi drag and drop
 
-          // setting up new drop location in special case of multi drag because
-          // rules are a bit different = refer to description for more details
-          this.dropPointLocation = {
-            hasLeft: Number(id),
-            direction: this.dragOverPosition,
-          };
+          const pos = DRAG_OVER_POSITION.LEFT_SIDE;
+          if (pos !== this.dragOverPosition) {
+            this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
+            this.dragOverPosition = DRAG_OVER_POSITION.LEFT_SIDE;
 
-          // same reason as the if statement bellow
-          this.dragEnterEvent.emit(this.dropPointLocation);
+            // setting up new drop location in special case of multi drag because
+            // rules are a bit different = refer to description for more details
+            this.dropPointLocation = {
+              hasLeft: Number(id),
+              direction: this.dragOverPosition,
+            };
 
-          const { height, right, left, top } = target.getBoundingClientRect();
-          if (this.multiSelectionState && this.selectedIds.length > 1) {
-            // only create the highlight when multi drag and drop
+            // same reason as the if statement bellow
+            this.dragEnterEvent.emit(this.dropPointLocation);
+
+            const { height, right, left, top } = target.getBoundingClientRect();
+
+            if (height === 240) {
+              this.createDropHighlight({ top, left, right, direction: this.dragOverPosition });
+            }
+          }
+        }
+
+        if (offsetX > 70 && offsetX <= 140) {
+          // positioned rightside of the tile
+          const pos = DRAG_OVER_POSITION.RIGHT_SIDE;
+          if (pos !== this.dragOverPosition) {
+            this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
+            this.dragOverPosition = DRAG_OVER_POSITION.RIGHT_SIDE;
+
+            // setting up new drop location in special case of multi drag because
+            // rules are a bit different = refer to description for more details
+            this.dropPointLocation = {
+              hasLeft: Number(id),
+              direction: this.dragOverPosition,
+            };
+            // emitting here the new dropLocation in case of multi drag
+            // because there are special rules when multidragging
+            // fx: an the dragged elements cannot be swapped, but drop point
+            // can also be a tile, although the actual drop will be before or after the tile
+            // depending on which side we are pointing with the mouse
+            this.dragEnterEvent.emit(this.dropPointLocation);
+            const { height, right, left, top } = target.getBoundingClientRect();
+
             if (height === 240) {
               this.createDropHighlight({ top, left, right, direction: this.dragOverPosition });
             }
@@ -75,35 +104,6 @@ export class DragndropDirective {
         }
       }
 
-      if (offsetX > 70 && offsetX <= 140) {
-        // positioned rightside of the tile
-        const pos = DRAG_OVER_POSITION.RIGHT_SIDE;
-        if (pos !== this.dragOverPosition) {
-          this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
-          this.dragOverPosition = DRAG_OVER_POSITION.RIGHT_SIDE;
-
-          // setting up new drop location in special case of multi drag because
-          // rules are a bit different = refer to description for more details
-          this.dropPointLocation = {
-            hasLeft: Number(id),
-            direction: this.dragOverPosition,
-          };
-          // emitting here the new dropLocation in case of multi drag
-          // because there are special rules when multidragging
-          // fx: an the dragged elements cannot be swapped, but drop point
-          // can also be a tile, although the actual drop will be before or after the tile
-          // depending on which side we are pointing with the mouse
-          this.dragEnterEvent.emit(this.dropPointLocation);
-          const { height, right, left, top } = target.getBoundingClientRect();
-
-          if (this.multiSelectionState && this.selectedIds.length > 1) {
-            // only create the highlight when multi drag and drop
-            if (height === 240) {
-              this.createDropHighlight({ top, left, right, direction: this.dragOverPosition });
-            }
-          }
-        }
-      }
       this.dragOverTileId =
         Number(target.getAttribute('id').replace(/\D/g, '')) === 999
           ? null
@@ -208,8 +208,6 @@ export class DragndropDirective {
         offsetY,
       });
 
-      this.dragLeaveEvent.emit(this.dropPointLocation);
-
       if (this.multiSelectionState === true && this.selectedIds.length === 1) {
         if (this.selectedIds.length === 1) {
           const targetId = target.getAttribute('id').replace(/\D/g, '');
@@ -232,6 +230,8 @@ export class DragndropDirective {
       if (height === 240) {
         this.createDropHighlight({ top, left, right, direction });
       }
+
+      this.dragLeaveEvent.emit(this.dropPointLocation);
     } catch (e) {
       // TODO: add neutral notification here
     }

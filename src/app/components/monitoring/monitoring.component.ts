@@ -69,6 +69,8 @@ export class MonitoringComponent implements OnInit {
         if (this.dragOverTileId === null) {
           // only do some actions if dropping in between tiles
 
+          console.log('dropPointLocation', this.dropPointLocation);
+
           this.selectedScene.insertTilesAtPosition({
             startIndexToRemove: Number(transferData[0]),
             startIndexToInsert: direction === 'left' ? hasLeft : hasLeft + 1,

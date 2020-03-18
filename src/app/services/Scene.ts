@@ -41,14 +41,18 @@ export class Scene {
   public insertTileAtPosition({ indexToRemoveAt, newIndexOnScene }) {
     const stlCopy = [...this.simpleTileList];
     const tile = stlCopy[indexToRemoveAt];
-    const res = this.getGapTileAfterIndex({ indexToStartAt: indexToRemoveAt });
+    const gapTileIndex = this.getGapTileAfterIndex({ indexToStartAt: newIndexOnScene });
 
-    console.log(res);
-
-    if (res) {
-      stlCopy.splice(res.index, 1); // remove the gapTile from the list
-      stlCopy.splice(indexToRemoveAt, 1, res.tile); // replace indexToRemoveAt position with the gap tile
+    if (gapTileIndex) {
+      const removedGapTileArr = stlCopy.splice(gapTileIndex, 1); // remove the gapTile from the list
+      stlCopy.splice(indexToRemoveAt, 1, removedGapTileArr[0]); // replace indexToRemoveAt position with the gap tile
       stlCopy.splice(newIndexOnScene, 0, tile); // insert the dragged tile at newIndexOnScene position
+    }
+
+    for (let i = 0; i < stlCopy.length; i++) {
+      if (i < newIndexOnScene) {
+        if (!stlCopy[i].hasBeenTouched) stlCopy[i].setTouched(true);
+      } else break;
     }
 
     this.setTileList(stlCopy);
@@ -64,6 +68,7 @@ export class Scene {
    */
   public insertTilesAtPosition({ startIndexToRemove, startIndexToInsert, tileIndexArr }) {
     const stlCopy = [...this.simpleTileList];
+    tileIndexArr.reverse();
     const length = tileIndexArr.length;
 
     // holds the gapTiles extracted from the simpleTileList to be placed
@@ -73,20 +78,23 @@ export class Scene {
     for (let i = 0; i < length; i++) {
       // going through the simpleTileList to get the same amount of gapTiles
       // as selectedTiles to be used as replacement on the grid;
-      const index = stlCopy.findIndex((t, j) => t.isGapTile && j > startIndexToRemove && !t.hasBeenTouched);
+      const index = stlCopy.findIndex((t, j) => t.isGapTile && j >= startIndexToInsert && !t.hasBeenTouched);
       // TODO: needs fixing - update all touchedTiles so that we pick up first gapTile that was not touched
       if (index !== -1) {
         const res = stlCopy.splice(index, 1);
         res[0].setTouched(true);
+        console.log('gapTile', res[0]);
         gapTileArr.push(res[0]);
       }
     }
+
+    gapTileArr.reverse();
 
     if (gapTileArr && gapTileArr.length === tileIndexArr.length) {
       if (startIndexToRemove < startIndexToInsert) {
         // if dragging tiles after the initial position
 
-        tileIndexArr.reverse().forEach((index: string) => {
+        tileIndexArr.forEach((index: string, j: number) => {
           // for each index, replace the the tile with the gapTiles
           // and then insert the tiles at the new positions
 
@@ -98,13 +106,23 @@ export class Scene {
       if (startIndexToRemove > startIndexToInsert) {
         // if dragging tiles before the initial position
 
-        tileIndexArr.reverse().forEach((index: string, j: number) => {
+        console.log('startIndexToInsert', startIndexToInsert);
+        console.log('tileIndexArr', tileIndexArr);
+
+        tileIndexArr.forEach((index: string, j: number) => {
           // for each index, replace the the tile with the gapTiles
           // and then insert the tiles at the new positions
-
+          // const res = stlCopy.splice(Number(index), 1, gapTileArr.shift());
+          // stlCopy.splice(startIndexToInsert, 0, res[0]);
           const res = stlCopy.splice(Number(index) + j, 1, gapTileArr.shift());
           stlCopy.splice(startIndexToInsert, 0, res[0]);
         });
+      }
+
+      for (let i = 0; i < stlCopy.length; i++) {
+        if (i < startIndexToInsert) {
+          if (!stlCopy[i].hasBeenTouched) stlCopy[i].setTouched(true);
+        } else break;
       }
 
       this.setTileList(stlCopy);
@@ -113,6 +131,8 @@ export class Scene {
     }
   }
 
+  doSomething(stlCopy, index: number, gapTileArr, startIndexToInsert) {}
+
   /**
    * FOR SINGLE TILE DRAG
    * used to get a gap tile as replacement for a dragged and dropped selected tile
@@ -120,14 +140,16 @@ export class Scene {
    */
   private getGapTileAfterIndex({ indexToStartAt }) {
     const stlCopy = [...this.simpleTileList];
-    const tile = stlCopy.find((t: SimpleTile, i) => t.isGapTile && i > indexToStartAt && !t.hasBeenTouched);
+    let index = -1;
+    const tile = stlCopy.find((t: SimpleTile, i) => {
+      if (t.isGapTile && i >= indexToStartAt && !t.hasBeenTouched) {
+        index = i;
+        return true;
+      }
+    });
     // TODO: needs fixing - update all touchedTiles so that we pick up first gapTile that was not touched
-    if (tile !== undefined) {
-      tile.setTouched(true);
-      return {
-        tile,
-        index: stlCopy.findIndex(t => t.id === tile.id),
-      };
+    if (tile !== undefined && index !== -1) {
+      return index;
     }
     return null;
   }
