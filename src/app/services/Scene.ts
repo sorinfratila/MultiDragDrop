@@ -83,7 +83,6 @@ export class Scene {
       if (index !== -1) {
         const res = stlCopy.splice(index, 1);
         res[0].setTouched(true);
-        console.log('gapTile', res[0]);
         gapTileArr.push(res[0]);
       }
     }
@@ -106,14 +105,9 @@ export class Scene {
       if (startIndexToRemove > startIndexToInsert) {
         // if dragging tiles before the initial position
 
-        console.log('startIndexToInsert', startIndexToInsert);
-        console.log('tileIndexArr', tileIndexArr);
-
         tileIndexArr.forEach((index: string, j: number) => {
           // for each index, replace the the tile with the gapTiles
           // and then insert the tiles at the new positions
-          // const res = stlCopy.splice(Number(index), 1, gapTileArr.shift());
-          // stlCopy.splice(startIndexToInsert, 0, res[0]);
           const res = stlCopy.splice(Number(index) + j, 1, gapTileArr.shift());
           stlCopy.splice(startIndexToInsert, 0, res[0]);
         });
@@ -130,8 +124,6 @@ export class Scene {
       throw new Error('There are no more gap tiles to be used');
     }
   }
-
-  doSomething(stlCopy, index: number, gapTileArr, startIndexToInsert) {}
 
   /**
    * FOR SINGLE TILE DRAG
