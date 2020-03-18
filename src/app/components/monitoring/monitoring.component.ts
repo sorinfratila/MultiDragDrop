@@ -69,6 +69,8 @@ export class MonitoringComponent implements OnInit {
         if (this.dragOverTileId === null) {
           // only do some actions if dropping in between tiles
 
+          console.log(Number(transferData[0]), hasLeft, Number(transferData[transferData.length - 1]));
+
           if (Number(transferData[0]) < hasLeft && hasLeft < Number(transferData[transferData.length - 1])) {
             // there'a a known issue when trying to drag tiles from BEFORE and AFTER a drop
             // location; it will not behave as expected;

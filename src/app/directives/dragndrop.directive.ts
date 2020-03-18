@@ -42,11 +42,22 @@ export class DragndropDirective {
     this.dragOverPosition = DRAG_OVER_POSITION.OUTSIDE;
   }
 
+  @HostListener('dragend', ['$event'])
+  dragEnd() {
+    document.body.style.cursor = 'auto';
+  }
+
   @HostListener('dragover', ['$event'])
   dragOverHandler = (ev: any) => {
     try {
-      const { target, offsetX } = ev;
+      const { target, offsetX, dataTransfer } = ev;
       const id = target.getAttribute('id').replace(/\D/g, '');
+      // console.log(id, this.dropPointLocation.direction);
+
+      // if (this.dropPointLocation.direction === DIRECTION.ABOVE_OR_BELLOW) {
+      //   console.log('dropEffect', dataTransfer.dropEffect);
+      // }
+
       ev.preventDefault();
       if (this.multiSelectionState && this.selectedIds.length > 1) {
         if (offsetX >= -0 && offsetX <= 70) {
@@ -65,7 +76,11 @@ export class DragndropDirective {
               direction: this.dragOverPosition,
             };
 
-            // same reason as the if statement bellow
+            // emitting here the new dropLocation in case of multi drag
+            // because there are special rules when multidragging
+            // fx: an the dragged elements cannot be swapped, but drop point
+            // can also be a tile, although the actual drop will be before or after the tile
+            // depending on which side we are pointing with the mouse
             this.dragEnterEvent.emit(this.dropPointLocation);
 
             const { height, right, left, top } = target.getBoundingClientRect();
@@ -89,11 +104,8 @@ export class DragndropDirective {
               hasLeft: Number(id),
               direction: this.dragOverPosition,
             };
-            // emitting here the new dropLocation in case of multi drag
-            // because there are special rules when multidragging
-            // fx: an the dragged elements cannot be swapped, but drop point
-            // can also be a tile, although the actual drop will be before or after the tile
-            // depending on which side we are pointing with the mouse
+
+            // same reason as previous if statement
             this.dragEnterEvent.emit(this.dropPointLocation);
             const { height, right, left, top } = target.getBoundingClientRect();
 
@@ -104,15 +116,61 @@ export class DragndropDirective {
         }
       }
 
-      this.dragOverTileId =
-        Number(target.getAttribute('id').replace(/\D/g, '')) === 999
-          ? null
-          : //  because of special rules of multi dragging
-          this.multiSelectionState && this.selectedIds.length > 1
-          ? null
-          : Number(target.getAttribute('id').replace(/\D/g, ''));
+      if (this.multiSelectionState && this.selectedIds.length > 1) {
+        // TODO: more logic is needed to handle case where drag over and drop might accidentaly
+        // happen in between the selected tiles - this shouldn't be allowed
 
-      this.dragOverEvent.emit(this.dragOverTileId);
+        // NO DROP IS ALLOWED
+        if (!document.getElementById('insertHere-999')) {
+          dataTransfer.dropEffect = 'none';
+
+          // it doesn't seem possible to change the dragImage while dragging
+          // TODO: needs further research
+
+          // removing the current dragIcon if any
+          // const sceneWrapper = document.getElementById('scene-wrapper');
+          // const dragIcon = document.getElementById('dragIcon');
+          // if (dragIcon && sceneWrapper) sceneWrapper.removeChild(dragIcon);
+
+          // // creating a new noDrop icon
+          // const icon = this.makeDragIcon({
+          //   id: 'noDropIcon',
+          //   textNode: 'X',
+          //   backgroundColor: '#ee2211',
+          //   fontSize: '5rem',
+          //   left: '-3000px',
+          // });
+
+          // appending the new noDrop icon
+          // if (sceneWrapper) {
+          // sceneWrapper.appendChild(icon);
+          // dataTransfer.setDragImage(icon, -5, -5);
+          // }
+        } else {
+          // DROP IS ALLOWED AGAIN
+          dataTransfer.dropEffect = 'move';
+
+          this.dragOverTileId =
+            Number(target.getAttribute('id').replace(/\D/g, '')) === 999
+              ? null
+              : //  because of special rules of multi dragging
+              this.multiSelectionState && this.selectedIds.length > 1
+              ? null
+              : Number(target.getAttribute('id').replace(/\D/g, ''));
+
+          this.dragOverEvent.emit(this.dragOverTileId);
+        }
+      } else {
+        this.dragOverTileId =
+          Number(target.getAttribute('id').replace(/\D/g, '')) === 999
+            ? null
+            : //  because of special rules of multi dragging
+            this.multiSelectionState && this.selectedIds.length > 1
+            ? null
+            : Number(target.getAttribute('id').replace(/\D/g, ''));
+
+        this.dragOverEvent.emit(this.dragOverTileId);
+      }
     } catch (e) {
       // TODO: add neutral notification here
     }
@@ -124,27 +182,17 @@ export class DragndropDirective {
       const { target, dataTransfer } = ev;
       if (this.multiSelectionState === true) {
         if (this.selectedIds.length > 1) {
-          const dragIcon = document.createElement('div');
-          const textContent = document.createTextNode(`${this.selectedIds.length}`);
-          dragIcon.setAttribute('id', 'dragIcon');
-          dragIcon.appendChild(textContent);
-          dragIcon.style.position = 'absolute';
-          dragIcon.style.display = 'flex';
-          dragIcon.style.alignItems = 'center';
-          dragIcon.style.fontFamily = 'sennheiser-regular, sans-serif';
-          dragIcon.style.justifyContent = 'center';
-          dragIcon.style.fontSize = '3rem';
-          dragIcon.style.color = '#080808';
-          dragIcon.style.left = '-1000px';
-          dragIcon.style.width = '50px';
-          dragIcon.style.height = '50px';
-          dragIcon.style.borderRadius = '25px';
-          dragIcon.style.backgroundColor = '#0096d6';
-
+          const icon = this.makeDragIcon({
+            id: 'dragIcon',
+            textNode: `${this.selectedIds.length}`,
+            backgroundColor: '#0084bd',
+            fontSize: '3rem',
+            left: '-3000px',
+          });
           const el = document.getElementById('scene-wrapper');
           if (el) {
-            el.appendChild(dragIcon);
-            dataTransfer.setDragImage(dragIcon, -5, -5);
+            el.appendChild(icon);
+            dataTransfer.setDragImage(icon, -5, -5);
           }
 
           dataTransfer.setData('Text', this.selectedIds.toString());
@@ -241,7 +289,6 @@ export class DragndropDirective {
   dropHandler = (ev: any) => {
     try {
       const { target, dataTransfer } = ev;
-
       ev.preventDefault();
       this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
 
@@ -326,5 +373,26 @@ export class DragndropDirective {
     if (direction === 'left') div.style.left = `${left - 28}px`;
     else if (direction === 'right') div.style.left = `${right - 8}px`;
     if (el && direction !== DIRECTION.ABOVE_OR_BELLOW) el.appendChild(div);
+  }
+
+  private makeDragIcon({ id, textNode, backgroundColor, fontSize, left }) {
+    const icon = document.createElement('div');
+    const textContent = document.createTextNode(textNode);
+    icon.setAttribute('id', id);
+    icon.appendChild(textContent);
+    icon.style.position = 'absolute';
+    icon.style.display = 'flex';
+    icon.style.alignItems = 'center';
+    icon.style.fontFamily = 'sennheiser-regular, sans-serif';
+    icon.style.justifyContent = 'center';
+    icon.style.fontSize = fontSize;
+    icon.style.color = '#080808';
+    icon.style.left = left;
+    icon.style.width = '50px';
+    icon.style.height = '50px';
+    icon.style.borderRadius = '25px';
+    icon.style.backgroundColor = backgroundColor;
+
+    return icon;
   }
 }
