@@ -200,15 +200,16 @@ export class MonitoringComponent implements OnInit {
         this.selectedScene.setLastShiftClickTile({ id: clickedTile.id, indexOnScene: index });
         setTimeout(() => {
           this.selectedIds = this.getAllDraggable();
-        }, 50);
+        }, 100);
       } else {
         // if there is at least 1 tile toggled already besides the clicked one
+        this.multiSelectionState = true;
         if (this.checkInitialTileStatus(clickedTile, index)) {
           clickedTile.toggle();
           // this.deviceList = this.selectedScene.simpleTileList;
           setTimeout(() => {
             this.selectedIds = this.getAllDraggable();
-          }, 50);
+          }, 100);
           return;
         }
 
@@ -295,6 +296,9 @@ export class MonitoringComponent implements OnInit {
             this.selectedScene.toggleMultiSelection(true);
           }
         }
+        setTimeout(() => {
+          this.selectedIds = this.getAllDraggable();
+        }, 100);
       }
     }
   }
