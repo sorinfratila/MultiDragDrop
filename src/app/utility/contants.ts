@@ -9,10 +9,6 @@ export const DEFAULT_TILE = {
     for (let i = 0; i < 250; i++) {
       const tile = new SimpleTile({
         id: i,
-        // indexOnScene: i,
-        size: DEFAULT_TILE.size,
-        color: DEFAULT_TILE.color,
-        model: 'gap-element',
         hasBeenTouched: false,
       });
 
@@ -21,4 +17,16 @@ export const DEFAULT_TILE = {
 
     return newTileList;
   },
+};
+
+export const DRAG_OVER_POSITION = {
+  LEFT_SIDE: 'left',
+  RIGHT_SIDE: 'right',
+  OUTSIDE: 'outside',
+};
+
+export const DIRECTION = {
+  LEFT: 'left',
+  RIGHT: 'right',
+  ABOVE_OR_BELLOW: 'aboveOrBellow',
 };

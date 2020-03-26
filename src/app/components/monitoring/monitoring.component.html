@@ -17,11 +17,12 @@
     (metaKeyAPressed)="onMetaKeyAPressed($event)"
     (escapePressed)="onEscapePressed($event)"
   >
-    <div id="wrapper-{{ i }}" *ngFor="let tile of deviceList; let i = index" (click)="toggle(tile, $event)">
+    <div id="wrapper-{{ i }}" *ngFor="let tile of deviceList; let i = index" (click)="toggle(tile, $event, i)">
       <app-tile
         *ngIf="!tile.isGapTile"
         id="t-{{ i }}"
-        (contextmenu)="onCtrlClick($event, tile)"
+        (click)="onShiftClick($event, tile, i)"
+        (contextmenu)="onCtrlClick($event, tile, i)"
         [data]="tile"
         [index]="i"
       ></app-tile>

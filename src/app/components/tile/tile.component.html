@@ -15,7 +15,7 @@
         <input type="checkbox" class="selection-checkbox" [checked]="data.toggled" id="multiselectMaxID{{ data.id }}" />
         <label class="toggle toggle--button" [ngClass]="{ 'multi-selection': data.preToggled }" id="label-{{ index }}">
           <div class="check-wrapper">
-            <div class="button__icon no__style" *ngIf="data.toggled"></div>
+            <div class="button__icon no__style" *ngIf="data.toggled">&#10004;</div>
           </div>
         </label>
       </div>

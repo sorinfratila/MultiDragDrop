@@ -1,12 +1,13 @@
 import { SimpleTile } from './SimpleTile';
-import { DEFAULT_TILE } from 'src/app/utility/contants';
 
 export class Scene {
   name: string;
   simpleTileList: SimpleTile[];
   selected: boolean;
-  multiSelectionState: boolean;
-  lastToggledTileId: any;
+  multiSelectionState: boolean; // there can be single or multiselection state
+  lastToggledTileId: any; // always know which one was the last tile toggled
+  initShiftClickTile: any; // sets the reference point when initiating shiftClick
+  lastShiftClickTile: any; // always sets to the last tile clicked for shift-select functionality
 
   constructor(name: string, selected: boolean, simpleTileList?: SimpleTile[]) {
     this.name = name;
@@ -15,6 +16,8 @@ export class Scene {
     this.selected = selected;
     this.multiSelectionState = false;
     this.lastToggledTileId = null;
+    this.initShiftClickTile = null;
+    this.lastShiftClickTile = null;
   }
 
   public setName(newName: string) {
@@ -33,6 +36,40 @@ export class Scene {
     return this.lastToggledTileId;
   }
 
+  public setInitShiftClickTile(obj: any) {
+    if (obj) {
+      const { id, indexOnScene } = obj;
+      this.initShiftClickTile = {
+        ...this.initShiftClickTile,
+        id,
+        indexOnScene,
+      };
+    } else this.initShiftClickTile = null;
+  }
+
+  public getInitShiftClickTile() {
+    return this.initShiftClickTile;
+  }
+
+  public setLastShiftClickTile(obj: any) {
+    if (obj) {
+      const { id, indexOnScene } = obj;
+      this.lastShiftClickTile = {
+        ...this.lastShiftClickTile,
+        id,
+        indexOnScene,
+      };
+    } else this.lastShiftClickTile = null;
+  }
+
+  public getLastShiftClickTile() {
+    return this.lastShiftClickTile;
+  }
+
+  public getCheckedTilesLength() {
+    return this.simpleTileList.filter((t: SimpleTile) => t.checked).length;
+  }
+
   /**
    * FOR SINGLE TILE DRAG
    * @param indexToRemoveAt - where to remove the dragged tile from
@@ -44,15 +81,17 @@ export class Scene {
     const gapTileIndex = this.getGapTileAfterIndex({ indexToStartAt: newIndexOnScene });
 
     if (gapTileIndex) {
+      tile.toggle(false);
+      this.setLastToggledTileId(null);
       const removedGapTileArr = stlCopy.splice(gapTileIndex, 1); // remove the gapTile from the list
       stlCopy.splice(indexToRemoveAt, 1, removedGapTileArr[0]); // replace indexToRemoveAt position with the gap tile
       stlCopy.splice(newIndexOnScene, 0, tile); // insert the dragged tile at newIndexOnScene position
-    }
 
-    for (let i = 0; i < stlCopy.length; i++) {
-      if (i < newIndexOnScene) {
-        if (!stlCopy[i].hasBeenTouched) stlCopy[i].setTouched(true);
-      } else break;
+      for (let i = 0; i < stlCopy.length; i++) {
+        if (i < newIndexOnScene) {
+          if (!stlCopy[i].hasBeenTouched) stlCopy[i].setTouched(true);
+        } else break;
+      }
     }
 
     this.setTileList(stlCopy);
@@ -98,7 +137,8 @@ export class Scene {
           // and then insert the tiles at the new positions
 
           const res = stlCopy.splice(Number(index), 1, gapTileArr.shift());
-          stlCopy.splice(startIndexToInsert, 0, res[0]); //
+          res[0].toggle(false);
+          stlCopy.splice(startIndexToInsert, 0, res[0]);
         });
       }
 
@@ -109,6 +149,7 @@ export class Scene {
           // for each index, replace the the tile with the gapTiles
           // and then insert the tiles at the new positions
           const res = stlCopy.splice(Number(index) + j, 1, gapTileArr.shift());
+          res[0].toggle(false);
           stlCopy.splice(startIndexToInsert, 0, res[0]);
         });
       }
@@ -159,7 +200,14 @@ export class Scene {
       stlCopy[fromIndex] = stlCopy[toIndex];
       stlCopy[toIndex] = tempTile;
 
-      stlCopy[fromIndex].setTouched(true);
+      stlCopy[toIndex].toggle(false);
+      this.setLastToggledTileId(null);
+
+      for (let i = 0; i < stlCopy.length; i++) {
+        if (i < fromIndex) {
+          if (!stlCopy[i].hasBeenTouched) stlCopy[i].setTouched(true);
+        } else break;
+      }
 
       this.setTileList(stlCopy);
     } else throw new Error('fromIndex or toIndex is not a number');
@@ -184,69 +232,6 @@ export class Scene {
     else this.multiSelectionState = !this.multiSelectionState;
 
     this.preToggleAllTiles(newValue);
-  }
-
-  public async checkTiles(tiles: SimpleTile[]) {
-    tiles.forEach((tile: SimpleTile) => {
-      tile.check(false);
-      if (tile.id === this.getLastToggledTileId()) {
-        this.setLastToggledTileId(null);
-      }
-    });
-
-    return this.reArrange(tiles);
-  }
-
-  public async checkAllTiles(newValue: boolean, monitoringTiles: SimpleTile[]): Promise<SimpleTile[]> {
-    const stlc = [...this.simpleTileList];
-    const stlcr = [...this.simpleTileList].reverse();
-    const tMap = new Map();
-
-    if (newValue) {
-      // when CHECKING all tiles => newValue === true
-      const lastIndexOf = stlcr.findIndex(t => !t.isGapTile);
-
-      if (lastIndexOf === -1) {
-        // no real tiles exist on the monitoring Scene
-        return this.simpleTileList.map((tile: SimpleTile, j) => {
-          if (monitoringTiles[j]) {
-            // const { indexOnScene } = tile;
-
-            monitoringTiles[j].check(newValue);
-            // monitoringTiles[j].setIndexOnScene(indexOnScene);
-            monitoringTiles[j].setTouched(true);
-            monitoringTiles[j].toggle(false);
-            monitoringTiles[j].preToggle(false);
-
-            return monitoringTiles[j];
-          }
-
-          return tile;
-        });
-      } else {
-        // some tiles have already been checked and can be seen on the monitoring Scene
-
-        const index = this.simpleTileList.length - lastIndexOf;
-        stlc.filter(t => !t.isGapTile).forEach(t => tMap.set(t.id, t));
-        const newMonitoringTile = monitoringTiles.filter(t => !tMap.has(t.id));
-
-        newMonitoringTile.forEach((tile, i) => {
-          tile.check(newValue);
-          // tile.setIndexOnScene(index + i);
-          tile.setTouched(true);
-          tile.toggle(false);
-          tile.preToggle(false);
-
-          stlc.splice(index + i, 1, tile);
-        });
-
-        return stlc;
-      }
-    } else {
-      // when UNCHECKING all tiles => newValue === false
-      this.setLastToggledTileId(null);
-      return this.instantiateTiles();
-    }
   }
 
   public toggleAllTiles(newValue: boolean) {
@@ -286,51 +271,6 @@ export class Scene {
     this.simpleTileList = newTileList;
   }
 
-  public async reArrange(tiles: SimpleTile[]): Promise<any> {
-    // re-arrange algorithm when CHECKING or UNCHECKING a tile
-    // a gap tile is placed in the position of the unchecked tile on every uncheck
-    const stlc = [...this.simpleTileList];
-    const stlcr = [...this.simpleTileList].reverse();
-
-    tiles.forEach((tile, j) => {
-      if (!tile.checked) {
-        // when tile has been UNCHECKED
-        const newTile = new SimpleTile({
-          id: j,
-          // indexOnScene: tile.indexOnScene,
-          size: DEFAULT_TILE.size,
-          color: DEFAULT_TILE.color,
-          model: DEFAULT_TILE.model,
-          hasBeenTouched: true,
-        });
-
-        const index = stlc.findIndex(t => t.id === tile.id);
-
-        stlc.splice(index, 1, newTile);
-      } else {
-        // when tile has been CHECKED
-        const lastIndexOf = stlcr.findIndex(t => t.hasBeenTouched);
-        if (this.multiSelectionState) tile.preToggle(true);
-
-        if (lastIndexOf === -1) {
-          const removedGapTile = stlc.shift();
-          // tile.setIndexOnScene(removedGapTile.indexOnScene);
-          tile.setTouched(true);
-
-          stlc.unshift(tile);
-        } else {
-          const index = this.simpleTileList.length - lastIndexOf + j;
-          // tile.setIndexOnScene(stlc[index].indexOnScene);
-          tile.setTouched(true);
-
-          stlc.splice(index, 1, tile);
-        }
-      }
-    });
-
-    return stlc;
-  }
-
   private instantiateTiles(simpleTileList?: SimpleTile[]) {
     if (simpleTileList !== undefined) {
       return simpleTileList.reduce((newArray: SimpleTile[], tile) => {
@@ -340,14 +280,11 @@ export class Scene {
     } else {
       const tileArray = [];
       // 250 is the maximum number of TILES that can be in each SCENE
+      // 10 x 25
       // there will always be 250 Tiles in every Scene, most of them probably gap Tiles
       for (let i = 0; i < 250; i++) {
         const tile = new SimpleTile({
           id: i,
-          // indexOnScene: i,
-          size: DEFAULT_TILE.size,
-          color: DEFAULT_TILE.color,
-          model: DEFAULT_TILE.model,
           hasBeenTouched: false,
         });
         tileArray.push(tile);

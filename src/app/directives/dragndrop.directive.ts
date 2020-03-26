@@ -1,16 +1,5 @@
 import { Directive, Output, EventEmitter, HostListener, Input } from '@angular/core';
-
-const DIRECTION = {
-  LEFT: 'left',
-  RIGHT: 'right',
-  ABOVE_OR_BELLOW: 'aboveOrBellow',
-};
-
-const DRAG_OVER_POSITION = {
-  LEFT_SIDE: 'left',
-  RIGHT_SIDE: 'right',
-  OUTSIDE: 'outside',
-};
+import { DIRECTION, DRAG_OVER_POSITION } from '../utility/contants';
 
 @Directive({
   selector: '[appDragNDrop]',
@@ -24,13 +13,20 @@ export class DragndropDirective {
   @Output() dragEnterEvent = new EventEmitter<any>();
   @Output() dragLeaveEvent = new EventEmitter<any>();
 
-  // keeps track of direction from which the drag was over tile and which id was left
+  /** always know what the drop position
+   * @hasLeft is used to know which tile was left (dragged over) last
+   * @direction is used to higlight the direction the tile was left from
+   */
   dropPointLocation: any = Object.create(null);
 
   // keeps track of  the #id the drag is currently over
   dragOverTileId: number;
 
-  // keeps track if drag is over left of tile or right of tile
+  /**
+   * to know over which part of the tile (rightside 50% or leftside 50%) the drag is happening
+   * if leftSide and drop then insert dragged tiles starting at the position before @dragOverTileId
+   * if rightSide and drop then insert after @dragOverTileId
+   */
   dragOverPosition: string;
 
   constructor() {
@@ -42,136 +38,96 @@ export class DragndropDirective {
     this.dragOverPosition = DRAG_OVER_POSITION.OUTSIDE;
   }
 
-  @HostListener('dragend', ['$event'])
-  dragEnd() {
-    document.body.style.cursor = 'auto';
-  }
-
   @HostListener('dragover', ['$event'])
   dragOverHandler = (ev: any) => {
     try {
       const { target, offsetX, dataTransfer } = ev;
-      const id = target.getAttribute('id').replace(/\D/g, '');
-      // console.log(id, this.dropPointLocation.direction);
 
-      // if (this.dropPointLocation.direction === DIRECTION.ABOVE_OR_BELLOW) {
-      //   console.log('dropEffect', dataTransfer.dropEffect);
-      // }
+      if (target.getAttribute('id')) {
+        const id = target.getAttribute('id').replace(/\D/g, '');
+        ev.preventDefault();
+        if (this.multiSelectionState && this.selectedIds.length > 1) {
+          if (offsetX >= -0 && offsetX <= 70) {
+            // positioned leftside of the tile
+            // only create the highlight when multi drag and drop
 
-      ev.preventDefault();
-      if (this.multiSelectionState && this.selectedIds.length > 1) {
-        if (offsetX >= -0 && offsetX <= 70) {
-          // positioned leftside of the tile
-          // only create the highlight when multi drag and drop
+            const pos = DRAG_OVER_POSITION.LEFT_SIDE;
+            if (pos !== this.dragOverPosition) {
+              this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
+              this.dragOverPosition = DRAG_OVER_POSITION.LEFT_SIDE;
 
-          const pos = DRAG_OVER_POSITION.LEFT_SIDE;
-          if (pos !== this.dragOverPosition) {
-            this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
-            this.dragOverPosition = DRAG_OVER_POSITION.LEFT_SIDE;
+              // setting up new drop location in special case of multi drag because
+              // rules are a bit different = refer to description for more details
+              this.dropPointLocation = {
+                hasLeft: Number(id),
+                direction: this.dragOverPosition,
+              };
 
-            // setting up new drop location in special case of multi drag because
-            // rules are a bit different = refer to description for more details
-            this.dropPointLocation = {
-              hasLeft: Number(id),
-              direction: this.dragOverPosition,
-            };
+              // emitting here the new dropLocation in case of multi drag
+              // because there are special rules when multidragging
+              // fx: an the dragged elements cannot be swapped, but drop point
+              // can also be a tile, although the actual drop will be before or after the tile
+              // depending on which side we are pointing with the mouse
+              this.dragEnterEvent.emit(this.dropPointLocation);
 
-            // emitting here the new dropLocation in case of multi drag
-            // because there are special rules when multidragging
-            // fx: an the dragged elements cannot be swapped, but drop point
-            // can also be a tile, although the actual drop will be before or after the tile
-            // depending on which side we are pointing with the mouse
-            this.dragEnterEvent.emit(this.dropPointLocation);
+              const { height, right, left, top } = target.getBoundingClientRect();
 
-            const { height, right, left, top } = target.getBoundingClientRect();
-
-            if (height === 240) {
-              this.createDropHighlight({ top, left, right, direction: this.dragOverPosition });
+              if (height === 240) {
+                this.createDropHighlight({ top, left, right, direction: this.dragOverPosition });
+              }
             }
           }
-        }
 
-        if (offsetX > 70 && offsetX <= 140) {
-          // positioned rightside of the tile
-          const pos = DRAG_OVER_POSITION.RIGHT_SIDE;
-          if (pos !== this.dragOverPosition) {
-            this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
-            this.dragOverPosition = DRAG_OVER_POSITION.RIGHT_SIDE;
+          if (offsetX > 70 && offsetX <= 140) {
+            // positioned rightside of the tile
+            const pos = DRAG_OVER_POSITION.RIGHT_SIDE;
+            if (pos !== this.dragOverPosition) {
+              this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
+              this.dragOverPosition = DRAG_OVER_POSITION.RIGHT_SIDE;
 
-            // setting up new drop location in special case of multi drag because
-            // rules are a bit different = refer to description for more details
-            this.dropPointLocation = {
-              hasLeft: Number(id),
-              direction: this.dragOverPosition,
-            };
+              // setting up new drop location in special case of multi drag because
+              // rules are a bit different = refer to description for more details
+              this.dropPointLocation = {
+                hasLeft: Number(id),
+                direction: this.dragOverPosition,
+              };
 
-            // same reason as previous if statement
-            this.dragEnterEvent.emit(this.dropPointLocation);
-            const { height, right, left, top } = target.getBoundingClientRect();
+              // same reason as previous if statement
+              this.dragEnterEvent.emit(this.dropPointLocation);
+              const { height, right, left, top } = target.getBoundingClientRect();
 
-            if (height === 240) {
-              this.createDropHighlight({ top, left, right, direction: this.dragOverPosition });
+              if (height === 240) {
+                this.createDropHighlight({ top, left, right, direction: this.dragOverPosition });
+              }
             }
           }
-        }
-      }
 
-      if (this.multiSelectionState && this.selectedIds.length > 1) {
-        // TODO: more logic is needed to handle case where drag over and drop might accidentaly
-        // happen in between the selected tiles - this shouldn't be allowed
+          if (!document.getElementById('insertHere-999')) {
+            // it doesn't seem possible to change the dragImage while dragging
+            // TODO: needs further research
+            // DROP IS NOT ALLOWED
+            dataTransfer.dropEffect = 'none';
+          } else {
+            // DROP IS ALLOWED
+            dataTransfer.dropEffect = 'move';
 
-        // NO DROP IS ALLOWED
-        if (!document.getElementById('insertHere-999')) {
-          dataTransfer.dropEffect = 'none';
-
-          // it doesn't seem possible to change the dragImage while dragging
-          // TODO: needs further research
-
-          // removing the current dragIcon if any
-          // const sceneWrapper = document.getElementById('scene-wrapper');
-          // const dragIcon = document.getElementById('dragIcon');
-          // if (dragIcon && sceneWrapper) sceneWrapper.removeChild(dragIcon);
-
-          // // creating a new noDrop icon
-          // const icon = this.makeDragIcon({
-          //   id: 'noDropIcon',
-          //   textNode: 'X',
-          //   backgroundColor: '#ee2211',
-          //   fontSize: '5rem',
-          //   left: '-3000px',
-          // });
-
-          // appending the new noDrop icon
-          // if (sceneWrapper) {
-          // sceneWrapper.appendChild(icon);
-          // dataTransfer.setDragImage(icon, -5, -5);
-          // }
+            this.dragOverTileId = null;
+            this.dragOverEvent.emit(this.dragOverTileId);
+          }
         } else {
-          // DROP IS ALLOWED AGAIN
-          dataTransfer.dropEffect = 'move';
-
+          const overId = target.getAttribute('id').replace(/\D/g, '');
+          if (overId.length < 4) {
+          }
           this.dragOverTileId =
             Number(target.getAttribute('id').replace(/\D/g, '')) === 999
-              ? null
-              : //  because of special rules of multi dragging
-              this.multiSelectionState && this.selectedIds.length > 1
               ? null
               : Number(target.getAttribute('id').replace(/\D/g, ''));
 
           this.dragOverEvent.emit(this.dragOverTileId);
         }
-      } else {
-        this.dragOverTileId =
-          Number(target.getAttribute('id').replace(/\D/g, '')) === 999
-            ? null
-            : //  because of special rules of multi dragging
-            this.multiSelectionState && this.selectedIds.length > 1
-            ? null
-            : Number(target.getAttribute('id').replace(/\D/g, ''));
-
-        this.dragOverEvent.emit(this.dragOverTileId);
       }
     } catch (e) {
+      console.log(e);
       // TODO: add neutral notification here
     }
   };
@@ -189,6 +145,7 @@ export class DragndropDirective {
             fontSize: '3rem',
             left: '-3000px',
           });
+
           const el = document.getElementById('scene-wrapper');
           if (el) {
             el.appendChild(icon);
@@ -211,6 +168,7 @@ export class DragndropDirective {
           : Number(target.getAttribute('id').replace(/\D/g, ''));
       this.dragStartEvent.emit(this.dragOverTileId);
     } catch (e) {
+      console.log(e);
       // TODO: add neutral notification
     }
   };
@@ -219,26 +177,30 @@ export class DragndropDirective {
   dragEnterHandler = (ev: any) => {
     try {
       const { target } = ev;
-      const targetId = target.getAttribute('id').replace(/\D/g, '');
-      const el = document.getElementById(targetId);
-      if (this.multiSelectionState === true && targetId !== '999') {
-        if (this.selectedIds.length === 1) {
-          el.style.outline = 'dashed';
-          el.style.outlineWidth = '3px';
-          el.style.opacity = '0.5';
-        }
-        // this.dropPointLocation.hasLeft = null;
-        this.dragEnterEvent.emit(this.dropPointLocation);
-      } else {
-        if (targetId !== '999') {
-          target.style.outline = 'dashed';
-          target.style.outlineWidth = '3px';
-          target.style.opacity = '0.5';
+      if (target.getAttribute('id')) {
+        const targetId = target.getAttribute('id').replace(/\D/g, '');
+        const el = document.getElementById(targetId);
+
+        if (this.multiSelectionState === true && targetId !== '999' && targetId.length < 4) {
+          if (this.selectedIds.length === 1) {
+            el.style.outline = 'dashed';
+            el.style.outlineWidth = '3px';
+            el.style.opacity = '0.5';
+          }
           // this.dropPointLocation.hasLeft = null;
           this.dragEnterEvent.emit(this.dropPointLocation);
+        } else {
+          if (targetId !== '999' && targetId.length < 4) {
+            target.style.outline = 'dashed';
+            target.style.outlineWidth = '3px';
+            target.style.opacity = '0.5';
+            // this.dropPointLocation.hasLeft = null;
+            this.dragEnterEvent.emit(this.dropPointLocation);
+          }
         }
       }
     } catch (e) {
+      console.log(e);
       // TODO: add neutral notification here
     }
   };
@@ -249,38 +211,41 @@ export class DragndropDirective {
       const { offsetX, offsetY, target } = ev;
       const { height, right, left, top } = ev.target.getBoundingClientRect();
 
-      const res = Number(target.getAttribute('id').replace(/\D/g, ''));
-      this.dropPointLocation = this.setDropPointLocation({
-        target: res,
-        offsetX,
-        offsetY,
-      });
+      if (target.getAttribute('id')) {
+        const res = Number(target.getAttribute('id').replace(/\D/g, ''));
+        this.dropPointLocation = this.setDropPointLocation({
+          target: res,
+          offsetX,
+          offsetY,
+        });
 
-      if (this.multiSelectionState === true && this.selectedIds.length === 1) {
-        if (this.selectedIds.length === 1) {
-          const targetId = target.getAttribute('id').replace(/\D/g, '');
-          const el = document.getElementById(targetId);
-          if (el) {
-            // removing highlight
-            el.style.outline = 'none';
-            el.style.opacity = '1';
+        if (this.multiSelectionState === true && this.selectedIds.length === 1) {
+          if (this.selectedIds.length === 1) {
+            const targetId = target.getAttribute('id').replace(/\D/g, '');
+            const el = document.getElementById(targetId);
+            if (el) {
+              // removing highlight
+              el.style.outline = 'none';
+              el.style.opacity = '1';
+            }
           }
+          this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
+        } else {
+          this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
+          ev.target.style.outline = 'none';
+          target.style.opacity = '1';
         }
-        this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
-      } else {
-        this.removeElementById({ idToRemove: 'insertHere-999', idToRemoveFrom: 'scene-wrapper' });
-        ev.target.style.outline = 'none';
-        target.style.opacity = '1';
+
+        const { direction } = this.dropPointLocation;
+
+        if (height === 240) {
+          this.createDropHighlight({ top, left, right, direction });
+        }
+
+        this.dragLeaveEvent.emit(this.dropPointLocation);
       }
-
-      const { direction } = this.dropPointLocation;
-
-      if (height === 240) {
-        this.createDropHighlight({ top, left, right, direction });
-      }
-
-      this.dragLeaveEvent.emit(this.dropPointLocation);
     } catch (e) {
+      console.log(e);
       // TODO: add neutral notification here
     }
   };
@@ -319,6 +284,7 @@ export class DragndropDirective {
       }
       ev.stopPropagation();
     } catch (e) {
+      console.log(e);
       // add neutral notification here
     }
   };
@@ -362,16 +328,16 @@ export class DragndropDirective {
     const el = document.getElementById('scene-wrapper');
     const div = document.createElement('div');
     div.setAttribute('id', 'insertHere-999');
-    div.style.width = '1.6rem';
+    div.style.width = '1.5rem';
     div.style.height = '24rem';
     div.style.position = 'absolute';
     div.style.zIndex = '-1';
     div.style.backgroundColor = 'transparent';
-    div.style.border = 'dashed';
+    div.style.outline = 'dashed';
     div.style.borderWidth = '2px';
-    div.style.top = `${top - 10}px`;
-    if (direction === 'left') div.style.left = `${left - 28}px`;
-    else if (direction === 'right') div.style.left = `${right - 8}px`;
+    div.style.top = `${top - 8}px`;
+    if (direction === 'left') div.style.left = `${left - 27}px`;
+    else if (direction === 'right') div.style.left = `${right - 7}px`;
     if (el && direction !== DIRECTION.ABOVE_OR_BELLOW) el.appendChild(div);
   }
 
@@ -388,6 +354,7 @@ export class DragndropDirective {
     icon.style.fontSize = fontSize;
     icon.style.color = '#080808';
     icon.style.left = left;
+    icon.style.zIndex = '5';
     icon.style.width = '50px';
     icon.style.height = '50px';
     icon.style.borderRadius = '25px';

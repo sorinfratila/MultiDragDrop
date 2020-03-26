@@ -33,7 +33,10 @@ export class MonitoringComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.selectedScene = new Scene('Scene 1', true);
+    this.selectedScene = new Scene('Scene 1', true); // create new scene
+    // generate as many as 250 usable tiles
+    // these are the tiles that can be used to DragNDrop
+    // the rest are gap tiles, just there to fill the gaps, swapping purposes
     const tiles = this.generateNonGapTiles(15);
     this.addTilesToScene(tiles);
 
@@ -58,40 +61,27 @@ export class MonitoringComponent implements OnInit {
 
   public onDrop(ev: any) {
     const { transferData } = ev;
-    this.selectedScene.toggleAllTiles(false);
-
     try {
       if (typeof transferData !== 'string') {
         // logic for dropping multiple tiles
+        // only insertingAtPosition possible in multi drag scenario
 
         const { hasLeft, direction } = this.dropPointLocation;
 
         if (this.dragOverTileId === null) {
-          // only do some actions if dropping in between tiles
-
-          console.log(Number(transferData[0]), hasLeft, Number(transferData[transferData.length - 1]));
-
-          if (Number(transferData[0]) < hasLeft && hasLeft < Number(transferData[transferData.length - 1])) {
-            // there'a a known issue when trying to drag tiles from BEFORE and AFTER a drop
-            // location; it will not behave as expected;
-            throw new Error('Droppping tiles from before and after the drop point is not recommended.');
-          } else {
-            this.selectedScene.insertTilesAtPosition({
-              startIndexToRemove: Number(transferData[0]),
-              startIndexToInsert: direction === 'left' ? hasLeft : hasLeft + 1,
-              tileIndexArr: transferData,
-            });
-
-            this.deviceList = this.selectedScene.simpleTileList;
-          }
+          this.selectedScene.insertTilesAtPosition({
+            startIndexToRemove: Number(transferData[0]),
+            startIndexToInsert: direction === 'left' ? hasLeft : hasLeft + 1,
+            tileIndexArr: transferData,
+          });
+          // }
         }
       } else {
         // logic for dealing with single tile swap
+        // and single tile insertAtPosition
 
         if (transferData && typeof this.dragOverTileId === 'number') {
           this.selectedScene.swapSingleTiles({ fromIndex: Number(transferData), toIndex: this.dragOverTileId });
-          this.deviceList = this.selectedScene.simpleTileList;
-          // this.sceneService.updateScene(this.selectedScene);
         } else {
           if (this.dropPointLocation.hasLeft !== null) {
             // logic for dealing with single tile dropping at position between other tiles
@@ -100,33 +90,33 @@ export class MonitoringComponent implements OnInit {
               indexToRemoveAt: Number(transferData),
               newIndexOnScene: direction === 'left' ? hasLeft : hasLeft + 1,
             });
-
-            this.deviceList = this.selectedScene.simpleTileList;
           }
         }
       }
+
+      this.deviceList = this.selectedScene.simpleTileList;
     } catch (e) {
       console.log(e);
-      // TODO: add notification here
     }
   }
 
   public generateNonGapTiles(num: number) {
     const tiles = [];
-    for (let i = 0; i < num; i++) {
-      tiles.push(
-        new SimpleTile({
-          isGapTile: false,
-          id: i,
-          color: 'GREY',
-          size: 'standard',
-          hasBeenTouched: true,
-          draggable: false,
-        }),
-      );
+    if (num < 250) {
+      for (let i = 0; i < num; i++) {
+        tiles.push(
+          new SimpleTile({
+            isGapTile: false,
+            id: i,
+            hasBeenTouched: true,
+            draggable: false,
+          }),
+        );
+      }
+      return tiles;
     }
 
-    return tiles;
+    return [];
   }
 
   public addTilesToScene(tiles: SimpleTile[]) {
@@ -135,14 +125,16 @@ export class MonitoringComponent implements OnInit {
     });
   }
 
-  public toggle(clickedTile: SimpleTile, e: any) {
+  public toggle(clickedTile: SimpleTile, e: any, index: number) {
     e.preventDefault();
-    if (e.metaKey) this.onCtrlClick(e, clickedTile);
+    if (e.shiftKey) return;
+    if (e.metaKey) this.onCtrlClick(e, clickedTile, index);
     else {
+      this.checkInitialTileStatus(clickedTile, index);
       clickedTile.toggle();
       setTimeout(() => {
         this.selectedIds = this.getAllDraggable();
-      }, 100);
+      }, 50);
 
       if (!this.selectedScene.getMultiSelectionState()) {
         console.log(clickedTile.toggled);
@@ -150,27 +142,184 @@ export class MonitoringComponent implements OnInit {
           // toggling the last tile toggled, becasue there
           // can be only one tile toggled at a time
           // if multiselectionState is false
+          this.selectedScene.setInitShiftClickTile({ id: clickedTile.id, indexOnScene: index });
+          this.selectedScene.setLastShiftClickTile({ id: clickedTile.id, indexOnScene: index });
           const lastId = this.selectedScene.getLastToggledTileId();
           if (lastId !== null) this.selectedScene.toggleTileById(lastId);
           this.selectedScene.setLastToggledTileId(clickedTile.id);
         } else {
           this.selectedScene.setLastToggledTileId(null);
+          this.selectedScene.setInitShiftClickTile(null);
+          this.selectedScene.setLastShiftClickTile(null);
+        }
+      }
+
+      this.selectedScene.setInitShiftClickTile({ id: clickedTile.id, indexOnScene: index });
+      this.selectedScene.setLastShiftClickTile({ id: clickedTile.id, indexOnScene: index });
+    }
+  }
+
+  private checkInitialTileStatus(clickedTile: SimpleTile, index: number) {
+    let answer = false;
+    if (this.selectedScene.getInitShiftClickTile()) {
+      if (clickedTile.id === this.selectedScene.getInitShiftClickTile().id) {
+        answer = true;
+        const tileList = this.selectedScene.getAllTiles();
+        if (this.selectedScene.getToggledTiles().length > 1) {
+          // when toggling the InitShiftClickTile and there are multiple tiles toggled
+          // resetting the initial point of referrence
+
+          if (tileList[index - 1] && tileList[index - 1].toggled === true) {
+            this.selectedScene.setInitShiftClickTile({
+              id: tileList[index - 1].id,
+              indexOnScene: index - 1,
+            });
+          } else {
+            this.selectedScene.setInitShiftClickTile({
+              id: tileList[index + 1].id,
+              indexOnScene: index + 1,
+            });
+          }
+        } else {
+          // clicking on the same tile with SHIFT pressed
+          // when clickedTile is the only one toggled so far
+          // resetting the toggling settings, updating and returning
+          this.selectedScene.setLastToggledTileId(null);
+          this.selectedScene.setInitShiftClickTile(null);
+          this.selectedScene.setLastShiftClickTile(null);
+        }
+      }
+    }
+
+    return answer;
+  }
+
+  onShiftClick(event: MouseEvent, clickedTile: SimpleTile, index: number) {
+    event.preventDefault();
+    if (event.shiftKey) {
+      if (!this.selectedScene.isAnyTileToggled()) {
+        // clicking the initial tile with SHIFT pressed
+        clickedTile.toggle();
+        this.selectedScene.setLastToggledTileId(clickedTile.id);
+        this.selectedScene.setInitShiftClickTile({ id: clickedTile.id, indexOnScene: index });
+        this.selectedScene.setLastShiftClickTile({ id: clickedTile.id, indexOnScene: index });
+        setTimeout(() => {
+          this.selectedIds = this.getAllDraggable();
+        }, 50);
+      } else {
+        // if there is at least 1 tile toggled already besides the clicked one
+        if (this.checkInitialTileStatus(clickedTile, index)) {
+          clickedTile.toggle();
+          // this.deviceList = this.selectedScene.simpleTileList;
+          setTimeout(() => {
+            this.selectedIds = this.getAllDraggable();
+          }, 50);
+          return;
+        }
+
+        if (this.selectedScene.getToggledTiles().length > 0) {
+          // there are already some toggled tiles
+
+          const { indexOnScene: initIndex } = this.selectedScene.getInitShiftClickTile();
+          const { indexOnScene: lastIndex } = this.selectedScene.getLastShiftClickTile();
+          if (initIndex < index) {
+            // changed direction right of initialIndex
+            this.selectedScene.simpleTileList
+              // untoggling toggled tiles right of the initialIndex that should not be toggled anymore
+              .filter((t, ind) => !t.isGapTile && ind <= initIndex && ind >= lastIndex)
+              .forEach(j => {
+                this.selectedScene.toggleTileById(j.id, false);
+              });
+
+            this.selectedScene.simpleTileList
+              .filter((til, ind) => !til.isGapTile && ind >= initIndex && ind <= lastIndex)
+              .forEach(j => {
+                this.selectedScene.toggleTileById(j.id, false);
+              });
+
+            // ids holds the array of ids that should be toggled with this action
+            const tiles = this.selectedScene.simpleTileList
+              .map((ti: SimpleTile, ind) => {
+                if (!ti.isGapTile) {
+                  ti.indexOnSc = ind;
+                  return ti;
+                }
+              })
+              .filter(x => x)
+              .reduce((acc: Array<SimpleTile>, tileToToggle: SimpleTile) => {
+                if (tileToToggle.indexOnSc >= initIndex && tileToToggle.indexOnSc <= index) {
+                  acc.push(tileToToggle);
+                }
+                return acc;
+              }, []);
+
+            tiles.forEach(i => {
+              this.selectedScene.toggleTileById(i.id, true);
+            });
+
+            this.selectedScene.setLastShiftClickTile({ id: clickedTile.id, indexOnScene: index });
+          } else {
+            // changed direction left of initialIndex
+            this.selectedScene.simpleTileList
+              // untoggling toggled tiles left of the initialIndex that should not be toggled anymore
+              .filter((t, ind) => !t.isGapTile && ind >= initIndex && ind <= lastIndex)
+              .forEach(j => {
+                this.selectedScene.toggleTileById(j.id, false);
+              });
+
+            this.selectedScene.simpleTileList
+              .filter((til, ind) => !til.isGapTile && ind >= lastIndex && ind <= initIndex)
+              .forEach(j => {
+                this.selectedScene.toggleTileById(j.id, false);
+              });
+
+            // ids holds the array of ids that should be toggled with this action
+            const tiles = this.selectedScene.simpleTileList
+              .map((ti: SimpleTile, ind) => {
+                if (!ti.isGapTile) {
+                  ti.indexOnSc = ind;
+                  return ti;
+                }
+              })
+              .filter(x => x)
+              .reduce((acc: Array<SimpleTile>, tileToToggle: SimpleTile) => {
+                if (tileToToggle.indexOnSc <= initIndex && tileToToggle.indexOnSc >= index) {
+                  acc.push(tileToToggle);
+                }
+                return acc;
+              }, []);
+
+            tiles.forEach(i => {
+              this.selectedScene.toggleTileById(i.id, true);
+            });
+
+            this.selectedScene.setLastShiftClickTile({ id: clickedTile.id, indexOnScene: index });
+          }
+
+          if (!this.selectedScene.getMultiSelectionState()) {
+            this.selectedScene.toggleMultiSelection(true);
+          }
         }
       }
     }
   }
 
-  onCtrlClick = (ev: any, clickedTile: SimpleTile) => {
+  // method used for ctrl+clicking a tile
+  onCtrlClick = (ev: any, clickedTile: SimpleTile, index: number) => {
     const { buttons } = ev;
     ev.preventDefault();
 
     if (buttons === 2) return; // it means it was initiated with a right click
+    this.checkInitialTileStatus(clickedTile, index);
 
-    // method used for ctrl+clicking a tile
     if (clickedTile.toggled === true) {
+      // when the clicked tile is the only one toggled so far
+      // => there are no other tiles toggled
       clickedTile.toggle();
       if (!this.selectedScene.isAnyTileToggled()) {
         this.selectedScene.setLastToggledTileId(null);
+        this.selectedScene.setInitShiftClickTile(null);
+        this.selectedScene.setLastShiftClickTile(null);
       }
     } else {
       if (this.selectedScene.isAnyTileToggled()) {
@@ -183,8 +332,10 @@ export class MonitoringComponent implements OnInit {
       clickedTile.toggle();
       setTimeout(() => {
         this.selectedIds = this.getAllDraggable();
-      }, 100);
+      }, 50);
       this.selectedScene.setLastToggledTileId(clickedTile.id);
+      this.selectedScene.setInitShiftClickTile({ id: clickedTile.id, indexOnScene: index });
+      this.selectedScene.setLastShiftClickTile({ id: clickedTile.id, indexOnScene: index });
     }
   };
 
@@ -200,7 +351,6 @@ export class MonitoringComponent implements OnInit {
 
       return numA < numB ? -1 : numA > numB ? 1 : 0;
     });
-    console.log(array);
     return array;
   };
 
@@ -228,6 +378,8 @@ export class MonitoringComponent implements OnInit {
       this.multiSelectionState = false;
       this.selectedScene.toggleAllTiles(false);
       this.selectedScene.setLastToggledTileId(null);
+      this.selectedScene.setInitShiftClickTile(null);
+      this.selectedScene.setLastShiftClickTile(null);
     }
   };
 }
