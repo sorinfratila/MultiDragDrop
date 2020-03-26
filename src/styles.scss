@@ -3,7 +3,6 @@
 @import './styles/colors.scss';
 @import './styles/monitoring-tiles.scss';
 
-
 html {
   font-size: 10px;
 }
@@ -12,11 +11,4 @@ body {
   color: $grey-09;
   background-color: $anthra-02;
   font-size: 1.4rem;
-}
-
-app-overview,
-app-equipment {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
 }

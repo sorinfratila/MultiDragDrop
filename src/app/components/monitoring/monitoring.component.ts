@@ -1,12 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Scene } from 'src/app/services/Scene';
 import { SimpleTile } from 'src/app/services/SimpleTile';
-
-const DIRECTION = {
-  LEFT: 'left',
-  RIGHT: 'right',
-  ABOVE_OR_BELLOW: 'aboveOrBellow',
-};
+import { DIRECTION } from 'src/app/utility/contants';
 
 @Component({
   selector: 'app-monitoring',
